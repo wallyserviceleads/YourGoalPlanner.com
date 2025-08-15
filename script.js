@@ -117,10 +117,16 @@ function showEntryModal(date, initial = {}) {
     if(clean.length) store[iso(date)] = clean; else delete store[iso(date)];
     saveJSON(DATA_KEY, store);
   }
-  function addEntry(date, label, amount){
-    const arr = entries(date); const n = Math.round(+amount||0);
-    if(n>0){ arr.push({label: String(label||'Sale'), amount:n}); setEntries(date, arr); }
-  }
+function addEntryFlow(date){
+  return showEntryModal(date, { mode: "add", label: "Sale" }).then((res)=>{
+    if (!res) return false;
+    const { label, amount } = res;
+    if (!Number.isFinite(amount) || amount <= 0) { alert("Please enter a positive number."); return false; }
+    const arr = entries(date); arr.push({ label, amount: Math.round(amount) }); setEntries(date, arr);
+    return true;
+  });
+}
+
   function total(date){ return entries(date).reduce((s,e)=>s+(+e.amount||0),0); }
 
   function updateGoalSummary(){
