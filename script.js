@@ -259,7 +259,7 @@ inp.type = "file"; inp.accept = "application/json";
       }catch(e){ alert("Import failed: " + e.message); }
     };
     inp.click();
-  });
+  );
   $("#resetBtn").addEventListener("click", ()=>{
     if(!confirm("Clear all locally saved data and settings?")) return;
     localStorage.removeItem(SETTINGS_KEY);
