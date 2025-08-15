@@ -6,6 +6,33 @@
 
 'use strict';
 
+function showEntryModal(date, initial = {}) {
+  const dlg = document.getElementById("entryModal");
+  const form = document.getElementById("entryForm");
+  const title = document.getElementById("entryTitle");
+  const label = document.getElementById("entryLabel");
+  const amount = document.getElementById("entryAmount");
+
+  title.textContent = `${initial.mode === "edit" ? "Edit" : "Add"} entry — ${iso(date)}`;
+  label.value = initial.label || "";
+  amount.value = initial.amount != null ? String(initial.amount) : "";
+
+  return new Promise((resolve) => {
+    const onClose = () => {
+      dlg.removeEventListener("close", onClose);
+      if (dlg.returnValue === "save") {
+        const amt = Number(String(amount.value).replace(/[^0-9.\-]/g, ""));
+        resolve({ label: label.value.trim(), amount: amt });
+      } else {
+        resolve(null);
+      }
+    };
+    dlg.addEventListener("close", onClose);
+    dlg.showModal();
+    setTimeout(() => label.focus(), 0);
+  });
+}
+
 (function(){
   const cfg = window.APP_CONFIG || {};
   const $ = (sel)=>document.querySelector(sel);
