@@ -99,7 +99,25 @@
           <button type="button" id="resetBtn">Reset All</button>
         </div>
       </section>
-
+      
+<dialog id="entryModal" class="modal">
+  <form method="dialog" id="entryForm" class="modal-inner">
+    <h3 id="entryTitle">Add entry</h3>
+    <div class="row">
+      <label for="entryLabel">Label</label>
+      <input id="entryLabel" type="text" placeholder="Sale" />
+    </div>
+    <div class="row">
+      <label for="entryAmount">Amount</label>
+      <input id="entryAmount" inputmode="decimal" pattern="[0-9.\-]*" placeholder="0.00" />
+    </div>
+    <menu class="actions">
+      <button value="cancel" type="reset">Cancel</button>
+      <button value="save" id="entrySave" type="submit">Save</button>
+    </menu>
+  </form>
+</dialog>
+      
       <footer class="settings-footer">
         <button value="cancel">Cancel</button>
         <button id="saveSettings" value="default">Save</button>
