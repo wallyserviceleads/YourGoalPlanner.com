@@ -12,15 +12,21 @@ function showEntryModal(date, initial = {}) {
   const title = document.getElementById("entryTitle");
   const label = document.getElementById("entryLabel");
   const amount = document.getElementById("entryAmount");
+  const delBtn = document.getElementById("entryDelete");
 
   title.textContent = `${initial.mode === "edit" ? "Edit" : "Add"} entry — ${iso(date)}`;
   label.value = initial.label || "";
   amount.value = initial.amount != null ? String(initial.amount) : "";
 
+  // Show Delete only in edit mode
+  if (delBtn) delBtn.style.display = initial.mode === "edit" ? "inline-flex" : "none";
+
   return new Promise((resolve) => {
     const onClose = () => {
       dlg.removeEventListener("close", onClose);
-      if (dlg.returnValue === "save") {
+      if (dlg.returnValue === "delete") {
+        resolve({ _delete: true });
+      } else if (dlg.returnValue === "save") {
         const amt = Number(String(amount.value).replace(/[^0-9.\-]/g, ""));
         resolve({ label: label.value.trim(), amount: amt });
       } else {
@@ -32,6 +38,7 @@ function showEntryModal(date, initial = {}) {
     setTimeout(() => label.focus(), 0);
   });
 }
+
 
 (function(){
   const cfg = window.APP_CONFIG || {};
@@ -126,6 +133,9 @@ function addEntryFlow(date){
     return true;
   });
 }
+// Callers:
+addEntryFlow(date).then(ok => { if (ok) render(); });
+
 
   function total(date){ return entries(date).reduce((s,e)=>s+(+e.amount||0),0); }
 
@@ -216,6 +226,17 @@ if(arr.length){
   ev.stopPropagation();
   showEntryModal(date, { mode: "edit", label: e.label || "", amount: e.amount }).then(res=>{
     if(!res) return;
+
+    // Handle Delete
+    if (res._delete) {
+      const copy = entries(date);
+      copy.splice(i, 1);
+      setEntries(date, copy);
+      render();
+      return;
+    }
+
+    // Handle Save
     const { label, amount } = res;
     if(!Number.isFinite(amount) || amount <= 0){ alert('Please enter a positive number.'); return; }
     const copy = entries(date);
@@ -224,6 +245,7 @@ if(arr.length){
     render();
   });
 });
+
 
     list.appendChild(row);
   });
