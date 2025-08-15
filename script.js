@@ -213,24 +213,17 @@ if(arr.length){
     // Click a row to edit (don’t bubble to the day cell add handler)
     row.title = 'Click to edit';
     row.addEventListener('click', (ev)=>{
-      ev.stopPropagation();
-      const newLabel = prompt(`Edit label for ${iso(date)}:`, e.label || '');
-      if (newLabel === null) return;
-
-      const amtStr = prompt('Edit amount ($):', String(e.amount));
-      if (amtStr === null) return;
-
-      const newAmt = Number(String(amtStr).replace(/[^0-9.\-]/g, ''));
-      if (!Number.isFinite(newAmt) || newAmt <= 0) {
-        alert('Please enter a positive number.');
-        return;
-      }
-
-      const copy = entries(date);
-      copy[i] = { label: newLabel, amount: Math.round(newAmt) };
-      setEntries(date, copy);
-      render();
-    });
+  ev.stopPropagation();
+  showEntryModal(date, { mode: "edit", label: e.label || "", amount: e.amount }).then(res=>{
+    if(!res) return;
+    const { label, amount } = res;
+    if(!Number.isFinite(amount) || amount <= 0){ alert('Please enter a positive number.'); return; }
+    const copy = entries(date);
+    copy[i] = { label, amount: Math.round(amount) };
+    setEntries(date, copy);
+    render();
+  });
+});
 
     list.appendChild(row);
   });
