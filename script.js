@@ -244,15 +244,11 @@ if(arr.length){
         cell.appendChild(t);
       }
 
-      cell.addEventListener('click', ()=>{
-        const label = prompt(`Label for ${iso(date)} (optional):`, "Sale");
-        if(label===null) return;
-        const amtStr = prompt("Amount ($):", "");
-        if(amtStr===null) return;
-        const amt = Number(String(amtStr).replace(/[^0-9.\-]/g,''));
-        if(!Number.isFinite(amt) || amt<=0){ alert("Please enter a positive number."); return; }
-        const arr = entries(date); arr.push({label, amount: Math.round(amt)}); setEntries(date, arr); render();
-      });
+      cell.addEventListener('click', async ()=>{
+  const ok = await addEntryFlow(date);
+  if (ok) render();
+});
+
 
       grid.appendChild(cell);
 
