@@ -111,10 +111,12 @@
       <label for="entryAmount">Amount</label>
       <input id="entryAmount" inputmode="decimal" pattern="[0-9.\-]*" placeholder="0.00" />
     </div>
-    <menu class="actions">
-      <button value="cancel" type="reset">Cancel</button>
-      <button value="save" id="entrySave" type="submit">Save</button>
-    </menu>
+   <menu class="actions">
+  <button value="cancel" type="reset">Cancel</button>
+  <button value="delete" id="entryDelete" class="danger" type="submit" style="display:none">Delete</button>
+  <button value="save" id="entrySave" type="submit">Save</button>
+</menu>
+
   </form>
 </dialog>
       
