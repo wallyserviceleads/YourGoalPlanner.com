@@ -170,15 +170,39 @@
       cell.innerHTML = `<div class="date"><span>${d}</span>${pace}</div>`;
 
       const list = document.createElement('div'); list.className='items';
-      const arr = entries(date);
-      if(arr.length){
-        arr.forEach(e=>{
-          const label = (e.label||'Entry').replace(/[<>&]/g, s=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[s]));
-          const row = document.createElement('div'); row.className='item';
-          row.innerHTML = `<span>${label}</span><span class="amount">${money(e.amount)}</span>`;
-          list.appendChild(row);
-        });
+const arr = entries(date);
+if(arr.length){
+  arr.forEach((e, i)=>{
+    const label = (e.label||'Entry').replace(/[<>&]/g, s=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[s]));
+    const row = document.createElement('div'); row.className='item';
+    row.innerHTML = `<span>${label}</span><span class="amount">${money(e.amount)}</span>`;
+
+    // Click a row to edit (don’t bubble to the day cell add handler)
+    row.title = 'Click to edit';
+    row.addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      const newLabel = prompt(`Edit label for ${iso(date)}:`, e.label || '');
+      if (newLabel === null) return;
+
+      const amtStr = prompt('Edit amount ($):', String(e.amount));
+      if (amtStr === null) return;
+
+      const newAmt = Number(String(amtStr).replace(/[^0-9.\-]/g, ''));
+      if (!Number.isFinite(newAmt) || newAmt <= 0) {
+        alert('Please enter a positive number.');
+        return;
       }
+
+      const copy = entries(date);
+      copy[i] = { label: newLabel, amount: Math.round(newAmt) };
+      setEntries(date, copy);
+      render();
+    });
+
+    list.appendChild(row);
+  });
+}
+
       cell.appendChild(list);
 
       if(isWork){
