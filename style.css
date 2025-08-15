@@ -92,3 +92,6 @@ dialog::backdrop { background: rgba(0,0,0,.5); }
   cursor: pointer;
 }
 .modal .actions button:hover { border-color: var(--accent); }
+
+.modal .actions .danger { border-color: #ff4d4f; color: #ff4d4f; }
+.modal .actions .danger:hover { background: rgba(255,77,79,.08); }
