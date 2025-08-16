@@ -36,7 +36,8 @@ title.textContent = `${initial.mode === "edit" ? "Edit" : "Add"} entry — ${_is
       }
     };
     dlg.addEventListener("close", onClose);
-    dlg.showModal();
+    if (!dlg.showModal) { dlg.setAttribute('open',''); } else { dlg.showModal(); }
+
     setTimeout(() => label.focus(), 0);
   });
 }
