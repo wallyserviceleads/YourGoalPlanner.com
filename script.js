@@ -134,7 +134,6 @@ function addEntryFlow(date){
   });
 }
 // Callers:
-addEntryFlow(date).then(ok => { if (ok) render(); });
 
 
   function total(date){ return entries(date).reduce((s,e)=>s+(+e.amount||0),0); }
