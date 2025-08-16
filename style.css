@@ -95,3 +95,8 @@ dialog::backdrop { background: rgba(0,0,0,.5); }
 
 .modal .actions .danger { border-color: #ff4d4f; color: #ff4d4f; }
 .modal .actions .danger:hover { background: rgba(255,77,79,.08); }
+
+/* Ensure day cells accept clicks */
+.day { cursor: pointer; pointer-events: auto; }
+/* Keep the dialog above everything when open */
+.modal { z-index: 100000; }
