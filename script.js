@@ -43,6 +43,16 @@ title.textContent = `${initial.mode === "edit" ? "Edit" : "Add"} entry — ${_is
 
 
 (function(){
+   /*__UNSTICK_DIALOG__*/
+try {
+  const dlg = document.getElementById('entryModal');
+  if (dlg) {
+    if (dlg.open) { try { dlg.close(); } catch {} }
+    dlg.removeAttribute('open');               // ensure not open
+  }
+  // If browser left siblings inert, restore interactivity:
+  document.querySelectorAll('[inert]').forEach(el => el.removeAttribute('inert'));
+} catch {}
   const cfg = window.APP_CONFIG || {};
   const $ = (sel)=>document.querySelector(sel);
   const $$ = (sel)=>Array.from(document.querySelectorAll(sel));
