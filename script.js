@@ -151,20 +151,21 @@ function addEntryFlow(date){
 
   function total(date){ return entries(date).reduce((s,e)=>s+(+e.amount||0),0); }
 
-  function updateGoalSummary(){
+  function updateGoalSummary(progress=0){
     const name = settings.goalName || "Goal";
     const amt = money(settings.goalAmount||0);
     let range = "no range";
     if(settings.goalStart && settings.goalEnd) range = `${settings.goalStart} → ${settings.goalEnd}`;
     else if(settings.goalStart) range = `from ${settings.goalStart}`;
     else if(settings.goalEnd) range = `until ${settings.goalEnd}`;
-    $("#goalSummary").textContent = `${name} — ${amt} (${range})`;
+    const pct = settings.goalAmount > 0 ? (progress / settings.goalAmount) * 100 : 0;
+    const pctText = `– ${pct.toFixed(1)}%`;
+    $("#goalSummary").textContent = `${name} — ${amt} (${range}) ${pctText}`;
   }
 
   function render(){
     applyTheme();
-    updateGoalSummary();
-
+    
     const y=current.getFullYear(), m=current.getMonth();
     $("#monthLabel").textContent = new Date(y,m,1).toLocaleString(undefined,{month:'long',year:'numeric'});
     grid.innerHTML = "";
@@ -194,12 +195,16 @@ function addEntryFlow(date){
         progress += (Array.isArray(arr)?arr:[]).reduce((sum,x)=>sum+(+x.amount||0),0);
       }
     }
+     
+const pct = settings.goalAmount > 0 ? (progress / settings.goalAmount) * 100 : 0;
 
+    updateGoalSummary(progress);
+     
     kpiDaily.textContent = money(daily);
     kpiWeekly.textContent = money(weekly);
     kpiMonthly.textContent = money(monthly);
     kpiQuarterly.textContent = money(quarterly);
-    kpiYTD.textContent = money(progress);
+    kpiYTD.textContent = `${money(progress)} (${pct.toFixed(1)}%)`;
 
     // headers
     ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(h=>{
