@@ -14,7 +14,9 @@ function showEntryModal(date, initial = {}) {
   const amount = document.getElementById("entryAmount");
   const delBtn = document.getElementById("entryDelete");
 
-  title.textContent = `${initial.mode === "edit" ? "Edit" : "Add"} entry — ${iso(date)}`;
+  const _isod = (d)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+title.textContent = `${initial.mode === "edit" ? "Edit" : "Add"} entry — ${_isod(date)}`;
+
   label.value = initial.label || "";
   amount.value = initial.amount != null ? String(initial.amount) : "";
 
