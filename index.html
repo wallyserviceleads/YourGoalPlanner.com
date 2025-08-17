@@ -172,6 +172,12 @@
   // send once on page load
   window.addEventListener("load", () => pingUsage("Calendar opened"));
 </script>
-  
+
+  <script>
+  const params = new URLSearchParams(location.search);
+  const cid = params.get('cid');
+  if (cid) localStorage.setItem('ghlContactId', cid);
+</script>
+
 </body>
 </html>
