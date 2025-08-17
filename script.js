@@ -346,3 +346,68 @@ if(arr.length){
   // Boot
   render();
 })();
+// netlify/functions/ghl-usage.js
+export const handler = async (event) => {
+  const origin = event.headers.origin || "";
+  const cors = {
+    "Access-Control-Allow-Origin": "https://calendar.yourgoalplanner.com",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Max-Age": "86400"
+  };
+
+  // Preflight
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: cors };
+  }
+
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, headers: cors, body: "Use POST" };
+  }
+
+  try {
+    const { contactId, lastUsedAtISO, noteText } = JSON.parse(event.body || "{}");
+    if (!contactId) {
+      return { statusCode: 400, headers: cors, body: "Missing contactId" };
+    }
+
+    const token = process.env.GHL_TOKEN;                     // HighLevel token (v2 private integration or OAuth)
+    const lastUsageFieldId = process.env.GHL_LAST_USAGE_FIELD_ID; // optional: the custom field id for “Last Usage”
+    const base = "https://services.leadconnectorhq.com";     // HighLevel API host
+
+    const headers = {
+      "Authorization": `Bearer ${token}`,
+      "Accept": "application/json",
+      "Content-Type": "application/json",
+      // HighLevel/LeadConnector requires an API Version header on many endpoints:
+      "Version": "2021-07-28"
+    };
+
+    // Option A: update a custom field (if you created one and set its id)
+    let results = [];
+    if (lastUsageFieldId && lastUsedAtISO) {
+      const res = await fetch(`${base}/contacts/${contactId}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({
+          // custom field values array (id + value)
+          customFields: [{ id: lastUsageFieldId, value: lastUsedAtISO }]
+        })
+      });
+      results.push({ type: "customField", status: res.status });
+    }
+
+    // Option B: also drop a note (nice audit trail)
+    const text = noteText || `Calendar used at ${lastUsedAtISO || new Date().toISOString()}`;
+    const noteRes = await fetch(`${base}/contacts/${contactId}/notes`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ body: text })
+    });
+    results.push({ type: "note", status: noteRes.status });
+
+    return { statusCode: 200, headers: cors, body: JSON.stringify({ ok: true, results }) };
+  } catch (err) {
+    return { statusCode: 500, headers: cors, body: JSON.stringify({ error: String(err) }) };
+  }
+};
