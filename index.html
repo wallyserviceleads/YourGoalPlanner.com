@@ -1,4 +1,11 @@
 <!DOCTYPE html>
+<script>
+  // Grab ?cid= from the page URL and remember it
+  const qp = new URLSearchParams(location.search);
+  const cid = qp.get('cid');
+  if (cid) localStorage.setItem('ghlContactId', cid);
+</script>
+
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
