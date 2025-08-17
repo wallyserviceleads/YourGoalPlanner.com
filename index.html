@@ -186,5 +186,25 @@
   if (cid) localStorage.setItem('ghlContactId', cid);
 </script>
 
+  <script>
+  const contactId = localStorage.getItem('ghlContactId');
+
+  async function pingUsage(note) {
+    if (!contactId) return;
+    await fetch('/api/ghl-usage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contactId,
+        lastUsedAtISO: new Date().toISOString(),
+        noteText: note || null
+      })
+    });
+  }
+
+  // Send one when the calendar loads
+  window.addEventListener('load', () => pingUsage('Calendar opened'));
+</script>
+
 </body>
 </html>
