@@ -362,7 +362,21 @@ if(arr.length){
     render();
     settingsModal.close();
   });
-  $("#resetBtn").addEventListener("click", ()=>{
+
+   const helpBtn = $("#helpBtn");
+  const helpModal = $("#helpModal");
+  if (helpBtn && helpModal) {
+    helpBtn.addEventListener("click", () => {
+      settingsModal.close();
+      if (helpModal.showModal) {
+        helpModal.showModal();
+        helpModal.addEventListener("close", () => settingsModal.showModal(), { once: true });
+      } else {
+        helpModal.setAttribute("open", "");
+      }
+    });
+  }
+   $("#resetBtn").addEventListener("click", ()=>{
     if(!confirm("Clear all locally saved data and settings?")) return;
     localStorage.removeItem(SETTINGS_KEY);
     localStorage.removeItem(DATA_KEY);
