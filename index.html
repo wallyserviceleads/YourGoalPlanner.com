@@ -110,6 +110,13 @@
         </div>
       </section>
       
+ <section class="settings-section">
+        <h4>Help</h4>
+        <div class="data-actions">
+          <button type="button" id="helpBtn">How to use this calendar</button>
+        </div>
+      </section>
+
 
       
       <footer class="settings-footer">
@@ -118,7 +125,16 @@
       </footer>
     </form>
   </dialog>
-<dialog id="entryModal" class="modal">
+   <dialog id="helpModal" class="modal">
+    <form method="dialog" class="modal-inner">
+      <h3>How to use this calendar</h3>
+      <p>Configure your goal details and working days in Settings. Click any day on the calendar to add entries. All data stays in your browser.</p>
+      <menu class="actions">
+        <button value="ok">Close</button>
+      </menu>
+    </form>
+  </dialog>
+  <dialog id="entryModal" class="modal">
     <form method="dialog" id="entryForm" class="modal-inner">
       <h3 id="entryTitle">Add entry</h3>
 
