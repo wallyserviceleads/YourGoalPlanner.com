@@ -2,7 +2,8 @@
 window.APP_CONFIG = {
   DEFAULT_GOAL_NAME: "Yearly sales goal",
   DEFAULT_GOAL_AMOUNT: 500000,
-  DEFAULT_GOAL_START: "", // YYYY-MM-DD
-  DEFAULT_GOAL_END: "",   // YYYY-MM-DD
-  DEFAULT_THEME: "dark"   // 'dark' | 'light'
-};
+    DEFAULT_GOAL_START: "", // YYYY-MM-DD
+    DEFAULT_GOAL_END: "",   // YYYY-MM-DD
+    DEFAULT_GOAL_PROGRESS: 0,
+    DEFAULT_THEME: "dark"   // 'dark' | 'light'
+  };
