@@ -69,6 +69,7 @@ try {
   const goalAmountInp = $("#goalAmount");
   const goalStartInp = $("#goalStart");
   const goalEndInp = $("#goalEnd");
+  const goalProgressInp = $("#goalProgress");
   const themeToggle = $("#themeToggle");
 
   const monthLabel = $("#monthLabel");
@@ -98,6 +99,7 @@ try {
     goalAmount: Number(cfg.DEFAULT_GOAL_AMOUNT || 500000),
     goalStart: cfg.DEFAULT_GOAL_START || "",
     goalEnd: cfg.DEFAULT_GOAL_END || "",
+    goalProgress: Number(cfg.DEFAULT_GOAL_PROGRESS || 0),
     theme: cfg.DEFAULT_THEME || "dark",
     weekdays: {0:false,1:true,2:true,3:true,4:true,5:true,6:true},
   });
@@ -151,7 +153,20 @@ function addEntryFlow(date){
 
   function total(date){ return entries(date).reduce((s,e)=>s+(+e.amount||0),0); }
 
-  function updateGoalSummary(progress=0){
+  function sumRange(start, end){
+    if(!start || !end) return 0;
+    const s = sod(start), e = eod(end);
+    let sum = 0;
+    for(const [k,arr] of Object.entries(store)){
+      const d = new Date(k);
+      if(d >= s && d <= e){
+        sum += (Array.isArray(arr)?arr:[]).reduce((a,x)=>a+(+x.amount||0),0);
+      }
+    }
+    return sum;
+  }
+   
+   function updateGoalSummary(progress=0){
     const name = settings.goalName || "Goal";
     const amt = money(settings.goalAmount||0);
     let range = "no range";
@@ -165,7 +180,7 @@ function addEntryFlow(date){
 
   function render(){
     applyTheme();
-    
+    const now = new Date();
     const y=current.getFullYear(), m=current.getMonth();
     $("#monthLabel").textContent = new Date(y,m,1).toLocaleString(undefined,{month:'long',year:'numeric'});
     grid.innerHTML = "";
@@ -174,20 +189,11 @@ function addEntryFlow(date){
     const start = parseISO(settings.goalStart);
     const end = parseISO(settings.goalEnd);
 
-    const workInRange = workingDaysInRange(start, end, mask);
-    const daily = workInRange>0 ? (Number(settings.goalAmount||0)/workInRange) : 0;
-    const weekly = daily * [0,1,2,3,4,5,6].filter(d=>mask[d]).length;
-    const monthly = daily * workingDaysInMonth(current, mask);
+    const totalWork = workingDaysInRange(start, end, mask);
+    const today = sod(now);
+    const daysSoFar = workingDaysInRange(start, today, mask);
 
-    // Quarter
-    const qStartMonth = Math.floor(m/3)*3;
-    const qStart = new Date(y,qStartMonth,1);
-    const qEnd = new Date(y,qStartMonth+3,0);
-    const qDays = workingDaysInRange(qStart, qEnd, mask);
-    const quarterly = daily * qDays;
-
-    // Range progress
-    let progress = 0;
+let progress = Number(settings.goalProgress||0);
     const s = start? sod(start):null, e = end? eod(end):null;
     for(const [k,arr] of Object.entries(store)){
       const d = new Date(k);
@@ -196,14 +202,43 @@ function addEntryFlow(date){
       }
     }
      
-const pct = settings.goalAmount > 0 ? (progress / settings.goalAmount) * 100 : 0;
+    const remainingGoal = Math.max(0, Number(settings.goalAmount||0) - progress);
+    let remainingDays = totalWork - daysSoFar;
+    if(remainingDays < 0) remainingDays = 0;
+    const daily = remainingDays>0 ? (remainingGoal/remainingDays) : 0;
+
+    const weekStart = new Date(today); weekStart.setDate(weekStart.getDate()-weekStart.getDay());
+    const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate()+6);
+    const weekly = daily * workingDaysInRange(weekStart, weekEnd, mask);
+
+    const monthStart = new Date(y,m,1);
+    const monthEnd = new Date(y,m+1,0);
+    const monthly = daily * workingDaysInRange(monthStart, monthEnd, mask);
+
+    const qStartMonth = Math.floor(m/3)*3;
+    const qStart = new Date(y,qStartMonth,1);
+    const qEnd = new Date(y,qStartMonth+3,0);
+    const qDays = workingDaysInRange(qStart, qEnd, mask);
+    const quarterly = daily * qDays;
+
+    const dailyProgress = total(now);
+    const weeklyProgress = sumRange(weekStart, weekEnd);
+    const monthlyProgress = sumRange(monthStart, monthEnd);
+    const quarterlyProgress = sumRange(qStart, qEnd);
+
+    const dailyPct = daily>0 ? (dailyProgress/daily)*100 : 0;
+    const weeklyPct = weekly>0 ? (weeklyProgress/weekly)*100 : 0;
+    const monthlyPct = monthly>0 ? (monthlyProgress/monthly)*100 : 0;
+    const quarterlyPct = quarterly>0 ? (quarterlyProgress/quarterly)*100 : 0;
+
+    const pct = settings.goalAmount > 0 ? (progress / settings.goalAmount) * 100 : 0;
 
     updateGoalSummary(progress);
      
-    kpiDaily.textContent = money(daily);
-    kpiWeekly.textContent = money(weekly);
-    kpiMonthly.textContent = money(monthly);
-    kpiQuarterly.textContent = money(quarterly);
+     kpiDaily.textContent = `${money(daily)} (${dailyPct.toFixed(1)}%)`;
+    kpiWeekly.textContent = `${money(weekly)} (${weeklyPct.toFixed(1)}%)`;
+    kpiMonthly.textContent = `${money(monthly)} (${monthlyPct.toFixed(1)}%)`;
+    kpiQuarterly.textContent = `${money(quarterly)} (${quarterlyPct.toFixed(1)}%)`;
     kpiYTD.textContent = `${money(progress)} (${pct.toFixed(1)}%)`;
 
     // headers
@@ -302,6 +337,7 @@ if(arr.length){
     goalAmountInp.value = Number(settings.goalAmount||0) || "";
     goalStartInp.value = settings.goalStart || "";
     goalEndInp.value = settings.goalEnd || "";
+    goalProgressInp.value = Number(settings.goalProgress||0) || "";
     themeToggle.checked = settings.theme === "light";
     const cont = settingsModal.querySelector(".weekday-toggles");
     const boxes = Array.from(cont.querySelectorAll("input[type=checkbox][data-wd]"));
@@ -316,6 +352,7 @@ if(arr.length){
     settings.goalAmount = Number(goalAmountInp.value||0) || 0;
     settings.goalStart = goalStartInp.value || "";
     settings.goalEnd = goalEndInp.value || "";
+    settings.goalProgress = Number(goalProgressInp.value||0) || 0;
     settings.theme = themeToggle.checked ? "light" : "dark";
     const boxes = Array.from(settingsModal.querySelectorAll("input[type=checkbox][data-wd]"));
     const mask = {...settings.weekdays};
@@ -334,6 +371,7 @@ if(arr.length){
       goalAmount: Number(cfg.DEFAULT_GOAL_AMOUNT || 500000),
       goalStart: cfg.DEFAULT_GOAL_START || "",
       goalEnd: cfg.DEFAULT_GOAL_END || "",
+      goalProgress: Number(cfg.DEFAULT_GOAL_PROGRESS || 0),
       theme: cfg.DEFAULT_THEME || "dark",
       weekdays: {0:false,1:true,2:true,3:true,4:true,5:true,6:true},
     };
