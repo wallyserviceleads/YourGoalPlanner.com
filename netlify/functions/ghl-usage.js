@@ -1,5 +1,7 @@
 // netlify/functions/ghl-usage.js
-exports.handler = async (event) => {
+import fetch from 'node-fetch';
+
+export const handler = async (event) => {
   const cors = {
     "Access-Control-Allow-Origin": "https://calendar.yourgoalplanner.com",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
