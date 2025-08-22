@@ -1,31 +1,3 @@
-// BEFORE your fetch() calls:
-const headers = {
-  Authorization: `Bearer ${process.env.GHL_TOKEN}`,
-  Version: "2021-07-28",
-  Accept: "application/json",
-  "Content-Type": "application/json",
-};
-
-// Redact the token for logs (don’t leak secrets)
-const redacted =
-  (headers.Authorization || "").slice(0, 20) + "…redacted";
-console.log("[HL request headers]", {
-  Authorization: redacted,
-  Version: headers.Version,
-  Accept: headers.Accept,
-  "Content-Type": headers["Content-Type"],
-});
-
-// Example call (Create Note)
-const noteRes = await fetch(
-  `https://services.leadconnectorhq.com/contacts/${contactId}/notes`,
-  { method: "POST", headers, body: JSON.stringify({ body: text }) }
-);
-
-// Log HL’s response (status + body text)
-const noteBody = await noteRes.text();
-console.log("[HL response]", noteRes.status, noteBody);
-
 // netlify/functions/ghl-usage.js
 import fetch from 'node-fetch';
 
@@ -56,12 +28,21 @@ export const handler = async (event) => {
     const token = process.env.GHL_TOKEN; // set in Netlify
     const api = "https://services.leadconnectorhq.com";
     const headers = {
-      "Authorization": `Bearer ${token}`, // Private Integration or OAuth token
-      "Version": "2021-07-28",
-      "Accept": "application/json",
+      Authorization: `Bearer ${token}`, // Private Integration or OAuth token
+      Version: "2021-07-28",
+      Accept: "application/json",
       "Content-Type": "application/json",
     };
 
+    // Log headers with redacted token to avoid leaking secrets
+    const redacted = (headers.Authorization || "").slice(0, 20) + "…redacted";
+    console.log("[HL request headers]", {
+      Authorization: redacted,
+      Version: headers.Version,
+      Accept: headers.Accept,
+      "Content-Type": headers["Content-Type"],
+    });
+    
     // Add a Note (easy to verify in GHL)
     const text = noteText || `Calendar used at ${lastUsedAtISO || new Date().toISOString()}`;
     const noteRes = await fetch(`${api}/contacts/${contactId}/notes`, {
