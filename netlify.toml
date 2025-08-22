@@ -1,7 +1,13 @@
 [build]
   functions = "netlify/functions"
 
-[[redirects]]
+[build.environment]
+  # LeadConnector API token (private integration or OAuth)
+  GHL_TOKEN = "YOUR_GHL_TOKEN"
+  # Optional custom field ID for updating last usage
+  GHL_LAST_USAGE_FIELD_ID = ""
+  
+  [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
