@@ -28,7 +28,7 @@ export const handler = async (event) => {
     const token = process.env.GHL_TOKEN; // set in Netlify
     const api = "https://services.leadconnectorhq.com";
     const headers = {
-      Authorization: `Bearer ${token}`, // Private Integration or OAuth token
+      Authorization: `Bearer ${process.env.GHL_TOKEN}`, // Private Integration or OAuth token
       Version: "2021-07-28",
       Accept: "application/json",
       "Content-Type": "application/json",
