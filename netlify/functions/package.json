@@ -1,0 +1,16 @@
+diff --git a//dev/null b/package.json
+index 0000000000000000000000000000000000000000..7e056d92edf003a665588a8aa54be6568c7a24ae 100644
+--- a//dev/null
++++ b/package.json
+@@ -0,0 +1,11 @@
++{
++  "name": "goal-tracking-calendar-unbranded-v2",
++  "version": "1.0.0",
++  "type": "module",
++  "scripts": {
++    "test": "echo \"No tests\" && exit 0"
++  },
++  "dependencies": {
++    "node-fetch": "^3.3.2"
++  }
++}
