@@ -2,14 +2,25 @@
 import fetch from 'node-fetch';
 
 export const handler = async (event) => {
-  const cors = {
-    "Access-Control-Allow-Origin": "https://calendar.yourgoalplanner.com",
+  const requestOrigin = event.headers?.origin;
+  const whitelist = (process.env.ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+  const origin =
+    !whitelist.length || (requestOrigin && whitelist.includes(requestOrigin))
+      ? requestOrigin || "*"
+      : "*";  const cors = {
+    "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: cors };
+  if (whitelist.length && requestOrigin && !whitelist.includes(requestOrigin)) {
+    return { statusCode: 403, headers: cors, body: "Origin not allowed" };
+  }
   if (event.httpMethod !== "POST") return { statusCode: 405, headers: cors, body: "Use POST" };
-
+  
   try {
     const { contactId, lastUsedAtISO, noteText } = JSON.parse(event.body || "{}");
     if (!contactId) return { statusCode: 400, headers: cors, body: "Missing contactId" };
