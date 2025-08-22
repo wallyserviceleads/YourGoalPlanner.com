@@ -65,4 +65,9 @@ export const handler = async (event) => {
   } catch (e) {
     return { statusCode: 500, headers: cors, body: String(e) };
   }
+  await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/notes`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({ body: `Calendar used at ${new Date().toISOString()}` })
+});
 };
