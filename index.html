@@ -185,34 +185,6 @@
   </dialog>
 
   <script>
-  // however you store it; for testing you can set this in the browser console:
-  // localStorage.setItem("ghlContactId", "CONTACT_ID_HERE");
-  const contactId = localStorage.getItem("ghlContactId");
-
-  async function pingUsage(note) {
-    if (!contactId) return;
-    await fetch("/api/ghl-usage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contactId,
-        lastUsedAtISO: new Date().toISOString(),
-        noteText: note || null
-      })
-    });
-  }
-
-  // send once on page load
-  window.addEventListener("load", () => pingUsage("Calendar opened"));
-</script>
-
-  <script>
-  const params = new URLSearchParams(location.search);
-  const cid = params.get('cid');
-  if (cid) localStorage.setItem('ghlContactId', cid);
-</script>
-
-  <script>
   const contactId = localStorage.getItem('ghlContactId');
 
   async function pingUsage(note) {
