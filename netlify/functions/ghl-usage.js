@@ -1,5 +1,4 @@
 // netlify/functions/ghl-usage.js
-import fetch from 'node-fetch';
 
 export const handler = async (event) => {
   const requestOrigin = event.headers?.origin;
