@@ -7,7 +7,7 @@
   status = 200
   [build.environment]
   # LeadConnector API token (private integration or OAuth)
-  GHL_TOKEN = "YOUR_GHL_TOKEN"
+  GHL_TOKEN = "GHL_TOKEN"
   # Optional custom field ID for updating last usage
   GHL_LAST_USAGE_FIELD_ID = ""
   
