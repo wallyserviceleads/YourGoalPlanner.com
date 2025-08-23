@@ -164,9 +164,8 @@
   </dialog>
 
   <script>
-  const contactId = localStorage.getItem('ghlContactId');
-
   async function pingUsage(note) {
+   const contactId = localStorage.getItem('ghlContactId');
     if (!contactId) return;
     await fetch('/api/ghl-usage', {
       method: 'POST',
