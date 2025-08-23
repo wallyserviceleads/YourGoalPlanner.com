@@ -1,8 +1,14 @@
 // netlify/functions/ghl-usage.js
 
 export const handler = async (event) => {
+ const {
+    GHL_TOKEN,
+    GHL_LAST_USAGE_FIELD_ID,
+    ALLOWED_ORIGINS,
+  } = process.env;
+  
   const requestOrigin = event.headers?.origin;
-  const whitelist = (process.env.ALLOWED_ORIGINS || "")
+  const whitelist = (ALLOWED_ORIGINS || "")
     .split(",")
     .map((o) => o.trim())
     .filter(Boolean);
@@ -50,7 +56,7 @@ export const handler = async (event) => {
     const noteBody = await noteRes.text();
     console.log("[HL response]", noteRes.status, noteBody);
     // Optional: update a custom field if you later add GHL_LAST_USAGE_FIELD_ID
-    const fieldId = process.env.GHL_LAST_USAGE_FIELD_ID;
+    const fieldId = GHL_LAST_USAGE_FIELD_ID;
     let fieldStatus = null;
     if (fieldId && lastUsedAtISO) {
       const updRes = await fetch(`${api}/contacts/${contactId}`, {
