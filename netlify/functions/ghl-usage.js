@@ -24,10 +24,10 @@ export const handler = async (event) => {
     const { contactId, lastUsedAtISO, noteText } = JSON.parse(event.body || "{}");
     if (!contactId) return { statusCode: 400, headers: cors, body: "Missing contactId" };
 
-    const token = process.env.GHL_TOKEN; // set in Netlify
+    const token = GHL_TOKEN; // set in Netlify
     const api = "https://services.leadconnectorhq.com";
     const headers = {
-      Authorization: `Bearer ${process.env.GHL_TOKEN}`, // Private Integration or OAuth token
+      Authorization: `Bearer ${GHL_TOKEN}`, // Private Integration or OAuth token
       Version: "2021-07-28",
       Accept: "application/json",
       "Content-Type": "application/json",
