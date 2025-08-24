@@ -1,11 +1,41 @@
 // netlify/functions/ghl-usage.js
 
+const { GHL_TOKEN, GHL_LAST_USAGE_FIELD_ID } = process.env;
+
+async function setLastUsageDate({ contactId, lastUsedAtISO }) {
+  if (!GHL_LAST_USAGE_FIELD_ID)
+    return { skipped: true, reason: "field id not set" };
+
+  const dateOnly = new Date(lastUsedAtISO).toISOString().slice(0, 10);
+
+  const payload = {
+    customFields: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }],
+  };
+
+  const resp = await fetch(
+    `https://services.leadconnectorhq.com/contacts/${encodeURIComponent(
+      contactId
+    )}`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${GHL_TOKEN}`,
+        "Content-Type": "application/json",
+        Version: "2021-07-28",
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+
+  const text = await resp.text();
+  if (!resp.ok) {
+    throw new Error(`Update field failed ${resp.status}: ${text}`);
+  }
+  return text;
+}
+
 export const handler = async (event) => {
- const {
-    GHL_TOKEN,
-    GHL_LAST_USAGE_FIELD_ID,
-    ALLOWED_ORIGINS,
-  } = process.env;
+ const { ALLOWED_ORIGINS } = process.env;
   
   const requestOrigin = event.headers?.origin;
   const whitelist = (ALLOWED_ORIGINS || "")
@@ -15,7 +45,8 @@ export const handler = async (event) => {
   const origin =
     !whitelist.length || (requestOrigin && whitelist.includes(requestOrigin))
       ? requestOrigin || "*"
-      : "*";  const cors = {
+       : "*";
+  const cors = {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
@@ -30,7 +61,6 @@ export const handler = async (event) => {
     const { contactId, lastUsedAtISO, noteText } = JSON.parse(event.body || "{}");
     if (!contactId) return { statusCode: 400, headers: cors, body: "Missing contactId" };
 
-    const token = GHL_TOKEN; // set in Netlify
     const api = "https://services.leadconnectorhq.com";
     const headers = {
       Authorization: `Bearer ${GHL_TOKEN}`, // Private Integration or OAuth token
@@ -55,24 +85,22 @@ export const handler = async (event) => {
     });
     const noteBody = await noteRes.text();
     console.log("[HL response]", noteRes.status, noteBody);
-    // Optional: update a custom field if you later add GHL_LAST_USAGE_FIELD_ID
-    const fieldId = GHL_LAST_USAGE_FIELD_ID;
+    
     let fieldStatus = null;
-    if (fieldId && lastUsedAtISO) {
-      const updRes = await fetch(`${api}/contacts/${contactId}`, {
-        method: "PUT", headers,
-        body: JSON.stringify({ customFields: [{ id: fieldId, value: lastUsedAtISO }] })
-      });
-      fieldStatus = updRes.status;
+    if (lastUsedAtISO) {
+      try {
+        await setLastUsageDate({ contactId, lastUsedAtISO });
+        fieldStatus = 200;
+      } catch (err) {
+        fieldStatus = err.message;
+      }
     }
 
-    return { statusCode: 200, headers: cors, body: JSON.stringify({ ok: true, noteStatus: noteRes.status, fieldStatus }) };
-  } catch (e) {
+       return {
+      statusCode: 200,
+      headers: cors,
+      body: JSON.stringify({ ok: true, noteStatus: noteRes.status, fieldStatus }),
+    };
     return { statusCode: 500, headers: cors, body: String(e) };
   }
-  await fetch(`https://services.leadconnectorhq.com/contacts/${contactId}/notes`, {
-  method: "POST",
-  headers,
-  body: JSON.stringify({ body: `Calendar used at ${new Date().toISOString()}` })
-});
 };
