@@ -3,59 +3,94 @@
 // Pull env vars once at the top
 const { GHL_TOKEN, GHL_LAST_USAGE_FIELD_ID, ALLOWED_ORIGINS } = process.env;
 
+/**
+ * Update the "Last Usage" custom field on a contact.
+ * - Uses PUT /contacts/{id}
+ * - Tries `customFields` first; if non-2xx, retries with `customFieldsData`
+ * - Formats date as YYYY-MM-DD (typical for GHL Date fields)
+ */
 async function setLastUsageDate({ contactId, lastUsedAtISO }) {
-    if (!GHL_LAST_USAGE_FIELD_ID) {
+  if (!GHL_LAST_USAGE_FIELD_ID) {
     console.warn("No GHL_LAST_USAGE_FIELD_ID set; skipping date update");
-    return;
+    return { skipped: true };
   }
-const dateOnly = new Date(lastUsedAtISO).toISOString().slice(0, 10);
-  const payload = {
-    customFields: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }]
-    // If your account expects customFieldsData instead:
-    // customFieldsData: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }]
+
+  const dateOnly = new Date(lastUsedAtISO || Date.now()).toISOString().slice(0, 10);
+  const url = `https://services.leadconnectorhq.com/contacts/${encodeURIComponent(contactId)}`;
+
+  const baseHeaders = {
+    Authorization: `Bearer ${GHL_TOKEN}`,
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    Version: "2021-07-28",
   };
-  const resp = await fetch(
-    `https://services.leadconnectorhq.com/contacts/${encodeURIComponent(contactId)}`,
-    {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${GHL_TOKEN}`,
-        "Content-Type": "application/json",
-        Version: "2021-07-28"
-      },
-      body: JSON.stringify(payload)
-    }
-  );
- const text = await resp.text();
-  if (!resp.ok) throw new Error(`Failed to update field: ${resp.status} ${text}`);
-  return text;
+
+  // Attempt #1 — customFields
+  let resp = await fetch(url, {
+    method: "PUT",
+    headers: baseHeaders,
+    body: JSON.stringify({
+      customFields: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }],
+    }),
+  });
+  let text = await resp.text();
+  console.log("PUT customFields attempt:", resp.status, text);
+
+  if (resp.ok) return { ok: true, variant: "customFields", status: resp.status, text };
+
+  // Attempt #2 — customFieldsData
+  resp = await fetch(url, {
+    method: "PUT",
+    headers: baseHeaders,
+    body: JSON.stringify({
+      customFieldsData: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }],
+    }),
+  });
+  text = await resp.text();
+  console.log("PUT customFieldsData attempt:", resp.status, text);
+
+  if (!resp.ok) {
+    throw new Error(`Last usage update failed (${resp.status}): ${text}`);
+  }
+  return { ok: true, variant: "customFieldsData", status: resp.status, text };
 }
 
 export const handler = async (event) => {
+  // --- CORS ---
   const requestOrigin = event.headers?.origin;
   const whitelist = (ALLOWED_ORIGINS || "")
     .split(",")
     .map((o) => o.trim())
     .filter(Boolean);
+
   const origin =
     !whitelist.length || (requestOrigin && whitelist.includes(requestOrigin))
       ? requestOrigin || "*"
-       : "*";
+      : "*";
+
   const cors = {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
-  if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: cors };
+
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers: cors };
+  }
   if (whitelist.length && requestOrigin && !whitelist.includes(requestOrigin)) {
     return { statusCode: 403, headers: cors, body: "Origin not allowed" };
   }
-  if (event.httpMethod !== "POST") return { statusCode: 405, headers: cors, body: "Use POST" };
-  
+  if (event.httpMethod !== "POST") {
+    return { statusCode: 405, headers: cors, body: "Use POST" };
+  }
+
   try {
+    // --- Parse body ---
     const body = JSON.parse(event.body || "{}");
     const { contactId, lastUsedAtISO, noteText } = body;
-    if (!contactId) return { statusCode: 400, headers: cors, body: "Missing contactId" };
+    if (!contactId) {
+      return { statusCode: 400, headers: cors, body: "Missing contactId" };
+    }
 
     const api = "https://services.leadconnectorhq.com";
     const headers = {
@@ -73,20 +108,28 @@ export const handler = async (event) => {
       Accept: headers.Accept,
       "Content-Type": headers["Content-Type"],
     });
-    
-    // Add a Note (easy to verify in GHL)
+
+    // --- 1) Add a Note (easy to verify in GHL) ---
     const text = noteText || `Calendar used at ${lastUsedAtISO || new Date().toISOString()}`;
-    const noteRes = await fetch(`${api}/contacts/${contactId}/notes`, {
-      method: "POST", headers, body: JSON.stringify({ body: text })
+    const noteRes = await fetch(`${api}/contacts/${encodeURIComponent(contactId)}/notes`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ body: text }),
     });
     const noteBody = await noteRes.text();
-    console.log("[HL response]", noteRes.status, noteBody);
-    
+    console.log("[HL response - note]", noteRes.status, noteBody);
+
+    // --- 2) Update Last Usage custom field ---
     try {
-      await setLastUsageDate({
-        contactId: body.contactId,
-        lastUsedAtISO: body.lastUsedAtISO || new Date().toISOString()
+      const result = await setLastUsageDate({
+        contactId,
+        lastUsedAtISO: lastUsedAtISO || new Date().toISOString(),
       });
+      if (result?.ok) {
+        console.log(`[LastUsage] updated via ${result.variant}`, result.status);
+      } else if (result?.skipped) {
+        console.log("[LastUsage] skipped: field id not set");
+      }
     } catch (err) {
       console.error("last usage update error:", err);
     }
@@ -94,9 +137,10 @@ export const handler = async (event) => {
     return {
       statusCode: 200,
       headers: cors,
-      body: JSON.stringify({ ok: true, noteStatus: noteRes.status })
+      body: JSON.stringify({ ok: true, noteStatus: noteRes.status }),
     };
   } catch (e) {
-      return { statusCode: 500, headers: cors, body: String(e) };
-    }
-  };
+    console.error("Function error:", e);
+    return { statusCode: 500, headers: cors, body: String(e) };
+  }
+};
