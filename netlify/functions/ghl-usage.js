@@ -4,23 +4,19 @@
 const { GHL_TOKEN, GHL_LAST_USAGE_FIELD_ID } = process.env;
 
 async function setLastUsageDate({ contactId, lastUsedAtISO }) {
-   if (!GHL_LAST_USAGE_FIELD_ID) {
+    if (!GHL_LAST_USAGE_FIELD_ID) {
     console.warn("No GHL_LAST_USAGE_FIELD_ID set, skipping date update");
     return;
   }
 
   const dateOnly = new Date(lastUsedAtISO).toISOString().slice(0, 10); // YYYY-MM-DD
-  
-  const payload = {
-customFields: [
-      { id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }
-    ]
+   
+ const payload = {
+    customFields: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }],
   };
 
   const resp = await fetch(
     `https://services.leadconnectorhq.com/contacts/${encodeURIComponent(contactId)}`,
-      contactId
-    )}`,
     {
       method: "PATCH",
       headers: {
