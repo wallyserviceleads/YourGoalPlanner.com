@@ -1,19 +1,24 @@
 // netlify/functions/ghl-usage.js
 
+// Pull env vars once at the top
 const { GHL_TOKEN, GHL_LAST_USAGE_FIELD_ID } = process.env;
 
 async function setLastUsageDate({ contactId, lastUsedAtISO }) {
-  if (!GHL_LAST_USAGE_FIELD_ID)
-    return { skipped: true, reason: "field id not set" };
+   if (!GHL_LAST_USAGE_FIELD_ID) {
+    console.warn("No GHL_LAST_USAGE_FIELD_ID set, skipping date update");
+    return;
+  }
 
-  const dateOnly = new Date(lastUsedAtISO).toISOString().slice(0, 10);
-
+  const dateOnly = new Date(lastUsedAtISO).toISOString().slice(0, 10); // YYYY-MM-DD
+  
   const payload = {
-    customFields: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }],
+customFields: [
+      { id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }
+    ]
   };
 
   const resp = await fetch(
-    `https://services.leadconnectorhq.com/contacts/${encodeURIComponent(
+    `https://services.leadconnectorhq.com/contacts/${encodeURIComponent(contactId)}`,
       contactId
     )}`,
     {
@@ -29,7 +34,7 @@ async function setLastUsageDate({ contactId, lastUsedAtISO }) {
 
   const text = await resp.text();
   if (!resp.ok) {
-    throw new Error(`Update field failed ${resp.status}: ${text}`);
+    throw new Error(`Failed to update custom field: ${resp.status} ${text}`);
   }
   return text;
 }
@@ -87,20 +92,21 @@ export const handler = async (event) => {
     console.log("[HL response]", noteRes.status, noteBody);
     
     let fieldStatus = null;
-    if (lastUsedAtISO) {
-      try {
-        await setLastUsageDate({ contactId, lastUsedAtISO });
-        fieldStatus = 200;
-      } catch (err) {
-        fieldStatus = err.message;
+      if (lastUsedAtISO) {
+        try {
+          await setLastUsageDate({ contactId, lastUsedAtISO });
+          fieldStatus = 200;
+        } catch (err) {
+          fieldStatus = err.message;
+        }
       }
-    }
 
-       return {
-      statusCode: 200,
-      headers: cors,
-      body: JSON.stringify({ ok: true, noteStatus: noteRes.status, fieldStatus }),
-    };
-    return { statusCode: 500, headers: cors, body: String(e) };
-  }
-};
+        return {
+        statusCode: 200,
+        headers: cors,
+        body: JSON.stringify({ ok: true, noteStatus: noteRes.status, fieldStatus }),
+      };
+    } catch (e) {
+      return { statusCode: 500, headers: cors, body: String(e) };
+    }
+  };
