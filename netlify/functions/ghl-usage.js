@@ -1,58 +1,42 @@
 // netlify/functions/ghl-usage.js
 
-// Pull env vars once at the top
 const { GHL_TOKEN, GHL_LAST_USAGE_FIELD_ID, ALLOWED_ORIGINS } = process.env;
 
-/**
- * Update the "Last Usage" custom field on a contact.
- * - Uses PUT /contacts/{id}
- * - Tries `customFields` first; if non-2xx, retries with `customFieldsData`
- * - Formats date as YYYY-MM-DD (typical for GHL Date fields)
- */
+// --- Update Last Usage Field ---
 async function setLastUsageDate({ contactId, lastUsedAtISO }) {
   if (!GHL_LAST_USAGE_FIELD_ID) {
     console.warn("No GHL_LAST_USAGE_FIELD_ID set; skipping date update");
     return { skipped: true };
   }
 
-  const dateOnly = new Date(lastUsedAtISO || Date.now()).toISOString().slice(0, 10);
-  const url = `https://services.leadconnectorhq.com/contacts/${encodeURIComponent(contactId)}`;
+  // Use full ISO date string like "2025-08-24T00:00:00.000Z"
+  const isoValue = new Date(lastUsedAtISO || Date.now()).toISOString();
 
-  const baseHeaders = {
+  const url = `https://services.leadconnectorhq.com/contacts/${encodeURIComponent(contactId)}`;
+  const headers = {
     Authorization: `Bearer ${GHL_TOKEN}`,
-    "Content-Type": "application/json",
-    Accept: "application/json",
     Version: "2021-07-28",
+    Accept: "application/json",
+    "Content-Type": "application/json",
   };
 
-  // Attempt #1 — customFields
-  let resp = await fetch(url, {
-    method: "PUT",
-    headers: baseHeaders,
-    body: JSON.stringify({
-      customFields: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }],
-    }),
-  });
-  let text = await resp.text();
-  console.log("PUT customFields attempt:", resp.status, text);
+  const payload = {
+    customFields: [{ id: GHL_LAST_USAGE_FIELD_ID, value: isoValue }],
+  };
 
-  if (resp.ok) return { ok: true, variant: "customFields", status: resp.status, text };
-
-  // Attempt #2 — customFieldsData
-  resp = await fetch(url, {
+  const resp = await fetch(url, {
     method: "PUT",
-    headers: baseHeaders,
-    body: JSON.stringify({
-      customFieldsData: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }],
-    }),
+    headers,
+    body: JSON.stringify(payload),
   });
-  text = await resp.text();
-  console.log("PUT customFieldsData attempt:", resp.status, text);
+
+  const text = await resp.text();
+  console.log("[LastUsage update attempt]", resp.status, text);
 
   if (!resp.ok) {
-    throw new Error(`Last usage update failed (${resp.status}): ${text}`);
+    throw new Error(`Failed to update Last Usage field (${resp.status}): ${text}`);
   }
-  return { ok: true, variant: "customFieldsData", status: resp.status, text };
+  return { ok: true, status: resp.status, text };
 }
 
 export const handler = async (event) => {
@@ -74,9 +58,7 @@ export const handler = async (event) => {
     "Access-Control-Allow-Headers": "Content-Type",
   };
 
-  if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 200, headers: cors };
-  }
+  if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: cors };
   if (whitelist.length && requestOrigin && !whitelist.includes(requestOrigin)) {
     return { statusCode: 403, headers: cors, body: "Origin not allowed" };
   }
@@ -85,7 +67,6 @@ export const handler = async (event) => {
   }
 
   try {
-    // --- Parse body ---
     const body = JSON.parse(event.body || "{}");
     const { contactId, lastUsedAtISO, noteText } = body;
     if (!contactId) {
@@ -94,22 +75,13 @@ export const handler = async (event) => {
 
     const api = "https://services.leadconnectorhq.com";
     const headers = {
-      Authorization: `Bearer ${GHL_TOKEN}`, // Private Integration or OAuth token
+      Authorization: `Bearer ${GHL_TOKEN}`,
       Version: "2021-07-28",
       Accept: "application/json",
       "Content-Type": "application/json",
     };
 
-    // Log headers with redacted token to avoid leaking secrets
-    const redacted = (headers.Authorization || "").slice(0, 20) + "…redacted";
-    console.log("[HL request headers]", {
-      Authorization: redacted,
-      Version: headers.Version,
-      Accept: headers.Accept,
-      "Content-Type": headers["Content-Type"],
-    });
-
-    // --- 1) Add a Note (easy to verify in GHL) ---
+    // --- Add a Note ---
     const text = noteText || `Calendar used at ${lastUsedAtISO || new Date().toISOString()}`;
     const noteRes = await fetch(`${api}/contacts/${encodeURIComponent(contactId)}/notes`, {
       method: "POST",
@@ -119,17 +91,13 @@ export const handler = async (event) => {
     const noteBody = await noteRes.text();
     console.log("[HL response - note]", noteRes.status, noteBody);
 
-    // --- 2) Update Last Usage custom field ---
+    // --- Update Last Usage field ---
     try {
       const result = await setLastUsageDate({
         contactId,
         lastUsedAtISO: lastUsedAtISO || new Date().toISOString(),
       });
-      if (result?.ok) {
-        console.log(`[LastUsage] updated via ${result.variant}`, result.status);
-      } else if (result?.skipped) {
-        console.log("[LastUsage] skipped: field id not set");
-      }
+      console.log("[LastUsage] result:", result);
     } catch (err) {
       console.error("last usage update error:", err);
     }
