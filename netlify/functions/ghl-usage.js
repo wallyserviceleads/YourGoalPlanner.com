@@ -9,8 +9,8 @@ async function setLastUsageDate({ contactId, lastUsedAtISO }) {
     return { skipped: true };
   }
 
-  // Use full ISO date string like "2025-08-24T00:00:00.000Z"
-  const isoValue = new Date(lastUsedAtISO || Date.now()).toISOString();
+  // HighLevel often expects a simple YYYY-MM-DD date format for custom date fields.
+  const dateValue = new Date(lastUsedAtISO || Date.now()).toISOString().split('T')[0];
 
   const url = `https://services.leadconnectorhq.com/contacts/${encodeURIComponent(contactId)}`;
   const headers = {
@@ -21,7 +21,7 @@ async function setLastUsageDate({ contactId, lastUsedAtISO }) {
   };
 
   const payload = {
-    customFields: [{ id: GHL_LAST_USAGE_FIELD_ID, value: isoValue }],
+    customFields: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateValue }],
   };
 
   const resp = await fetch(url, {
