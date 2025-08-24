@@ -1,44 +1,6 @@
-// netlify/functions/ghl-usage.js
+// netlify/functions/ghl-login.js
 
-const { GHL_TOKEN, GHL_LAST_USAGE_FIELD_ID, ALLOWED_ORIGINS } = process.env;
-
-// --- Update Last Usage Field ---
-async function setLastUsageDate({ contactId, lastUsedAtISO }) {
-  if (!GHL_LAST_USAGE_FIELD_ID) {
-    console.warn("No GHL_LAST_USAGE_FIELD_ID set; skipping date update");
-    return { skipped: true };
-  }
-
-  // HighLevel often expects a simple YYYY-MM-DD date format for custom date fields.
-  const dateValue = new Date(lastUsedAtISO || Date.now()).toISOString().split('T')[0];
-
-  const url = `https://services.leadconnectorhq.com/contacts/${encodeURIComponent(contactId)}`;
-  const headers = {
-    Authorization: `Bearer ${GHL_TOKEN}`,
-    Version: "2021-07-28",
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  };
-
-  const payload = {
-    customFields: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateValue }],
-  };
-
-  const resp = await fetch(url, {
-    method: "PUT",
-    headers,
-    body: JSON.stringify(payload),
-  });
-
-  const text = await resp.text();
-  console.log("[LastUsage update attempt]", resp.status, text);
-
-  if (!resp.ok) {
-    throw new Error(`Failed to update Last Usage field (${resp.status}): ${text}`);
-  }
-  return { ok: true, status: resp.status, text };
-}
-
+const { GHL_TOKEN, ALLOWED_ORIGINS } = process.env;
 export const handler = async (event) => {
   // --- CORS ---
   const requestOrigin = event.headers?.origin;
@@ -68,7 +30,7 @@ export const handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || "{}");
-    const { contactId, lastUsedAtISO, noteText } = body;
+    const { contactId, noteText } = body;
     if (!contactId) {
       return { statusCode: 400, headers: cors, body: "Missing contactId" };
     }
@@ -81,8 +43,8 @@ export const handler = async (event) => {
       "Content-Type": "application/json",
     };
 
-    // --- Add a Note ---
-    const text = noteText || `Calendar used at ${lastUsedAtISO || new Date().toISOString()}`;
+    
+    const text = noteText || "last login";
     const noteRes = await fetch(`${api}/contacts/${encodeURIComponent(contactId)}/notes`, {
       method: "POST",
       headers,
@@ -90,17 +52,6 @@ export const handler = async (event) => {
     });
     const noteBody = await noteRes.text();
     console.log("[HL response - note]", noteRes.status, noteBody);
-
-    // --- Update Last Usage field ---
-    try {
-      const result = await setLastUsageDate({
-        contactId,
-        lastUsedAtISO: lastUsedAtISO || new Date().toISOString(),
-      });
-      console.log("[LastUsage] result:", result);
-    } catch (err) {
-      console.error("last usage update error:", err);
-    }
 
     return {
       statusCode: 200,
