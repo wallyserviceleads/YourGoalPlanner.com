@@ -1,20 +1,19 @@
 // netlify/functions/ghl-usage.js
 
 // Pull env vars once at the top
-const { GHL_TOKEN, GHL_LAST_USAGE_FIELD_ID } = process.env;
+const { GHL_TOKEN, GHL_LAST_USAGE_FIELD_ID, ALLOWED_ORIGINS } = process.env;
 
 async function setLastUsageDate({ contactId, lastUsedAtISO }) {
     if (!GHL_LAST_USAGE_FIELD_ID) {
-    console.warn("No GHL_LAST_USAGE_FIELD_ID set, skipping date update");
+    console.warn("No GHL_LAST_USAGE_FIELD_ID set; skipping date update");
     return;
   }
-
-  const dateOnly = new Date(lastUsedAtISO).toISOString().slice(0, 10); // YYYY-MM-DD
-   
- const payload = {
-    customFields: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }],
+const dateOnly = new Date(lastUsedAtISO).toISOString().slice(0, 10);
+  const payload = {
+    customFields: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }]
+    // If your account expects customFieldsData instead:
+    // customFieldsData: [{ id: GHL_LAST_USAGE_FIELD_ID, value: dateOnly }]
   };
-
   const resp = await fetch(
     `https://services.leadconnectorhq.com/contacts/${encodeURIComponent(contactId)}`,
     {
@@ -22,22 +21,17 @@ async function setLastUsageDate({ contactId, lastUsedAtISO }) {
       headers: {
         Authorization: `Bearer ${GHL_TOKEN}`,
         "Content-Type": "application/json",
-        Version: "2021-07-28",
+        Version: "2021-07-28"
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     }
   );
-
-  const text = await resp.text();
-  if (!resp.ok) {
-    throw new Error(`Failed to update custom field: ${resp.status} ${text}`);
-  }
+ const text = await resp.text();
+  if (!resp.ok) throw new Error(`Failed to update field: ${resp.status} ${text}`);
   return text;
 }
 
 export const handler = async (event) => {
- const { ALLOWED_ORIGINS } = process.env;
-  
   const requestOrigin = event.headers?.origin;
   const whitelist = (ALLOWED_ORIGINS || "")
     .split(",")
@@ -59,7 +53,8 @@ export const handler = async (event) => {
   if (event.httpMethod !== "POST") return { statusCode: 405, headers: cors, body: "Use POST" };
   
   try {
-    const { contactId, lastUsedAtISO, noteText } = JSON.parse(event.body || "{}");
+    const body = JSON.parse(event.body || "{}");
+    const { contactId, lastUsedAtISO, noteText } = body;
     if (!contactId) return { statusCode: 400, headers: cors, body: "Missing contactId" };
 
     const api = "https://services.leadconnectorhq.com";
@@ -87,22 +82,21 @@ export const handler = async (event) => {
     const noteBody = await noteRes.text();
     console.log("[HL response]", noteRes.status, noteBody);
     
-    let fieldStatus = null;
-      if (lastUsedAtISO) {
-        try {
-          await setLastUsageDate({ contactId, lastUsedAtISO });
-          fieldStatus = 200;
-        } catch (err) {
-          fieldStatus = err.message;
-        }
-      }
+    try {
+      await setLastUsageDate({
+        contactId: body.contactId,
+        lastUsedAtISO: body.lastUsedAtISO || new Date().toISOString()
+      });
+    } catch (err) {
+      console.error("last usage update error:", err);
+    }
 
-        return {
-        statusCode: 200,
-        headers: cors,
-        body: JSON.stringify({ ok: true, noteStatus: noteRes.status, fieldStatus }),
-      };
-    } catch (e) {
+    return {
+      statusCode: 200,
+      headers: cors,
+      body: JSON.stringify({ ok: true, noteStatus: noteRes.status })
+    };
+  } catch (e) {
       return { statusCode: 500, headers: cors, body: String(e) };
     }
   };
