@@ -6,6 +6,10 @@
   if (cid) localStorage.setItem('ghlContactId', cid);
 </script>
 
+<button onclick="auth.login()">Log in</button>
+<button onclick="auth.logout()">Log out</button>
+<button onclick="auth.callProtectedApi()">Call API</button>
+
 <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 <script>
   netlifyIdentity.on('login', user => {
