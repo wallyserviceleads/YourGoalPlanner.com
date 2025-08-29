@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Goal Planner</title>
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; margin-top: 5em; }
+    button { padding: 10px 20px; font-size: 1.2em; }
+  </style>
+</head>
+<body>
+  <h1>Welcome to Goal Planner</h1>
+  <p>Please log in to access your calendar.</p>
+  <button id="login">Login</button>
+
+  <script>
+    let auth0Client;
+
+    async function initAuth0() {
+      auth0Client = await createAuth0Client({
+        domain:  "{{ AUTH0_DOMAIN }}",        // replace with your domain
+        clientId:"{{ AUTH0_CLIENT_ID }}",     // replace with your client ID
+        authorizationParams: {
+          audience: "{{ AUTH0_AUDIENCE }}",   // the API identifier you created
+          redirect_uri: window.location.origin + "/login.html"
+        }
+      });
+
+      // Handle redirect from Auth0 after login
+      if (window.location.search.includes("code=")) {
+        await auth0Client.handleRedirectCallback();
+        window.history.replaceState({}, document.title, "/login.html");
+      }
+
+      // If user already logged in → redirect to calendar
+      if (await auth0Client.isAuthenticated()) {
+        window.location.href = "/index.html"; // send them to your calendar
+      }
+    }
+
+    // Login button
+    document.getElementById("login").addEventListener("click", () => {
+      auth0Client.loginWithRedirect();
+    });
+
+    initAuth0();
+  </script>
+</body>
+</html>
