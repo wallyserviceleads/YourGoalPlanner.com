@@ -1,14 +1,13 @@
 {
   "name": "goal-tracking-calendar",
   "version": "1.0.0",
-  "description": "Goal tracking calendar with Auth0 + Netlify functions",
-  "main": "index.js",
+  "description": "Goal tracking calendar with Auth0 + Netlify Functions",
   "scripts": {
     "build": "echo \"No build step\""
   },
-  "author": "",
   "license": "MIT",
   "dependencies": {
     "@serverless-jwt/netlify": "^0.5.3"
   }
 }
+
