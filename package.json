@@ -6,6 +6,7 @@
     "test": "echo \"No tests\" && exit 0"
   },
   "dependencies": {
-    "node-fetch": "^3.3.2"
+     "node-fetch": "^3.3.2",
+    "@serverless-jwt/netlify": "^1.0.0"
   }
 }
