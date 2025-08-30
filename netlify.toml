@@ -1,4 +1,7 @@
 [build]
+  node_version = "20"
+
+[build]
   functions = "netlify/functions"
 
 [[redirects]]
