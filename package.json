@@ -1,12 +1,14 @@
 {
-  "name": "goal-tracking-calendar-unbranded-v2",
+  "name": "goal-tracking-calendar",
   "version": "1.0.0",
-  "type": "module",
+  "description": "Goal tracking calendar with Auth0 + Netlify functions",
+  "main": "index.js",
   "scripts": {
-    "test": "echo \"No tests\" && exit 0"
+    "build": "echo \"No build step\""
   },
+  "author": "",
+  "license": "MIT",
   "dependencies": {
-     "node-fetch": "^3.3.2",
-    "@serverless-jwt/netlify": "^1.0.0"
+    "@serverless-jwt/netlify": "^0.5.3"
   }
 }
