@@ -1,51 +1,93 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - Goal Planner</title>
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <meta charset="utf-8" />
+  <title>Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Load Auth0 SPA SDK FIRST. Use defer + onload guard -->
+  <script
+    src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
+    defer
+    onload="window.__auth0Loaded = true"
+    onerror="console.error('Auth0 SDK failed to load')"
+  ></script>
   <style>
-    body { font-family: sans-serif; text-align: center; margin-top: 5em; }
-    button { padding: 10px 20px; font-size: 1.2em; }
+    body { font-family: system-ui, sans-serif; padding: 2rem; }
+    #status { margin: 1rem 0; }
+    button { padding: .6rem 1rem; font-size: 1rem; }
   </style>
 </head>
 <body>
-  <h1>Welcome to Goal Planner</h1>
-  <p>Please log in to access your calendar.</p>
-  <button id="login">Login</button>
+  <h1>Login</h1>
+  <div id="status">Loading…</div>
+  <button id="loginBtn" style="display:none">Login</button>
+  <button id="logoutBtn" style="display:none">Logout</button>
 
   <script>
+    // ⬇️ REPLACE THESE THREE
+    const AUTH0_DOMAIN   = "YOUR_TENANT.us.auth0.com";
+    const AUTH0_CLIENTID = "YOUR_AUTH0_CLIENT_ID";
+    const AUTH0_AUDIENCE = "https://calendar.yourgoalplanner.com/api";
+
     let auth0Client;
 
-    async function initAuth0() {
-      auth0Client = await createAuth0Client({
-        domain:  "dev-74ja1cuagr1s3c2c.us.auth0.com",        // replace with your domain
-        clientId:"KvD2HPQsxFeOFIezMtdaAFlFtqBQST8m",     // replace with your client ID
-        authorizationParams: {
-          audience: "https://calendar.yourgoalplanner.com/api",   // the API identifier you created
-          redirect_uri: window.location.origin + "/login.html"
-        }
-      });
-
-      // Handle redirect from Auth0 after login
-      if (window.location.search.includes("code=")) {
-        await auth0Client.handleRedirectCallback();
-        window.history.replaceState({}, document.title, "/login.html");
-      }
-
-      // If user already logged in → redirect to calendar
-      if (await auth0Client.isAuthenticated()) {
-        window.location.href = "/index.html"; // send them to your calendar
+    // Wait until the SDK script has actually loaded
+    async function waitForSdk() {
+      const started = Date.now();
+      while (!window.__auth0Loaded || typeof window.createAuth0Client !== "function") {
+        if (Date.now() - started > 8000) throw new Error("Auth0 SDK did not load");
+        await new Promise(r => setTimeout(r, 100));
       }
     }
 
-    // Login button
-    document.getElementById("login").addEventListener("click", () => {
+    async function init() {
+      try {
+        await waitForSdk();
+
+        auth0Client = await createAuth0Client({
+          domain: dev-74ja1cuagr1s3c2c.us.auth0.com,
+          clientId: KvD2HPQsxFeOFIezMtdaAFlFtqBQST8m
+,
+          authorizationParams: {
+            audience: https://calendar.yourgoalplanner.com/api,
+            redirect_uri: window.location.origin + "/login.html"
+          }
+        });
+
+        // Complete the Auth0 redirect back to /login.html
+        if (location.search.includes("code=") || location.search.includes("state=")) {
+          await auth0Client.handleRedirectCallback();
+          history.replaceState({}, document.title, "/login.html");
+        }
+
+        const authed = await auth0Client.isAuthenticated();
+        document.getElementById("status").textContent = authed ? "You are logged in." : "You are logged out.";
+        document.getElementById("loginBtn").style.display  = authed ? "none" : "";
+        document.getElementById("logoutBtn").style.display = authed ? "" : "none";
+
+        if (authed) {
+          // (Optional) test token, then go to your app
+          // const token = await auth0Client.getTokenSilently();
+          // console.log("token starts:", token.slice(0, 18));
+          window.location.href = "/index.html";
+        }
+      } catch (e) {
+        console.error("Auth0 init error:", e);
+        document.getElementById("status").textContent = "Login init error. See console.";
+      }
+    }
+
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      if (!auth0Client) { console.error("Auth0 not ready"); return; }
       auth0Client.loginWithRedirect();
     });
 
-    initAuth0();
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      if (!auth0Client) { console.error("Auth0 not ready"); return; }
+      auth0Client.logout({ logoutParams: { returnTo: window.location.origin + "/login.html" } });
+    });
+
+    init();
   </script>
 </body>
 </html>
