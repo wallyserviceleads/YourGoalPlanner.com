@@ -30,103 +30,55 @@
   <div class="row"><button id="showClaimsBtn">Show Access Token Claims</button></div>
   <pre id="claims" hidden></pre>
 
-  <script>
-    // ⬇️ REPLACE THESE THREE EXACTLY (no {{ }})
-    const AUTH0_DOMAIN   = "dev-74ja1cuagr1s3c2c.us.auth0.com";
-    const AUTH0_CLIENTID = "KvD2HPQsxFeOFIezMtdaAFlFtqBQST8m";
-    const AUTH0_AUDIENCE = "https://calendar.yourgoalplanner.com/api";
+ <!-- Load SDK first, no defer -->
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
-    let auth0Client;
+<script>
+  // put your real values here
+  const AUTH0_DOMAIN   = "YOUR_TENANT.us.auth0.com";
+  const AUTH0_CLIENTID = "YOUR_CLIENT_ID";
+  const AUTH0_AUDIENCE = "https://calendar.yourgoalplanner.com/api";
 
-    // Helper to update UI
-    function set(id, val, good) {
-      const el = document.getElementById(id);
-      el.textContent = val;
-      if (good === true)  { el.classList.add('ok'); el.classList.remove('bad'); }
-      if (good === false) { el.classList.add('bad'); el.classList.remove('ok'); }
+  let auth0Client;
+
+  async function init() {
+    if (typeof createAuth0Client !== "function") {
+      console.error("SDK not ready");
+      document.getElementById("status").textContent = "SDK not ready";
+      return;
     }
 
-    async function init() {
-      try {
-        // 2) Verify SDK presence
-        if (typeof window.createAuth0Client !== "function") {
-          set('sdk', 'no (SDK not loaded)', false);
-          set('status', 'SDK failed to load. Check Network tab for auth0-spa-js.', false);
-          return;
-        }
-        set('sdk', 'yes', true);
-
-        // 3) Create client
-        auth0Client = await createAuth0Client({
-          domain: AUTH0_DOMAIN,
-          clientId: AUTH0_CLIENTID,
-          authorizationParams: {
-            audience: AUTH0_AUDIENCE,
-            redirect_uri: window.location.origin + "/login.html"
-          }
-        });
-
-        // 4) Complete redirect if returning from Auth0
-        if (location.search.includes("code=") || location.search.includes("state=")) {
-          try {
-            await auth0Client.handleRedirectCallback();
-            history.replaceState({}, document.title, "/login.html");
-          } catch (e) {
-            console.error("handleRedirectCallback error:", e);
-            set('status', 'Redirect handling error (see console).', false);
-          }
-        }
-
-        // 5) Check auth state
-        const isAuthed = await auth0Client.isAuthenticated();
-        set('authed', String(isAuthed), isAuthed);
-        set('status', isAuthed ? 'You are logged in.' : 'You are logged out.', isAuthed);
-        document.getElementById('loginBtn').style.display  = isAuthed ? 'none' : '';
-        document.getElementById('logoutBtn').style.display = isAuthed ? '' : 'none';
-
-      } catch (e) {
-        console.error("init error:", e);
-        set('status', 'Init error (see console).', false);
+    auth0Client = await createAuth0Client({
+      domain: AUTH0_DOMAIN,
+      clientId: AUTH0_CLIENTID,
+      authorizationParams: {
+        audience: AUTH0_AUDIENCE,
+        redirect_uri: window.location.origin + "/login.html"
       }
+    });
+
+    if (location.search.includes("code=") || location.search.includes("state=")) {
+      await auth0Client.handleRedirectCallback();
+      history.replaceState({}, document.title, "/login.html");
     }
 
-    // 6) Buttons
-    document.getElementById('loginBtn').addEventListener('click', async () => {
-      if (!auth0Client) return alert("Auth0 not ready");
-      try {
-        await auth0Client.loginWithRedirect();
-      } catch (e) {
-        console.error("loginWithRedirect error:", e);
-        set('status', 'Login error (see console).', false);
-      }
-    });
+    const authed = await auth0Client.isAuthenticated();
+    document.getElementById("status").textContent = authed ? "You are logged in." : "You are logged out.";
+    document.getElementById("loginBtn").style.display  = authed ? "none" : "";
+    document.getElementById("logoutBtn").style.display = authed ? "" : "none";
+  }
 
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      if (!auth0Client) return alert("Auth0 not ready");
-      try {
-        await auth0Client.logout({ logoutParams: { returnTo: window.location.origin + "/login.html" } });
-      } catch (e) {
-        console.error("logout error:", e);
-        set('status', 'Logout error (see console).', false);
-      }
-    });
+  // ✅ wait for full page load so SDK is guaranteed present
+  window.addEventListener('load', init);
 
-    // 7) Show token claims (to confirm email claim)
-    document.getElementById('showClaimsBtn').addEventListener('click', async () => {
-      try {
-        if (!auth0Client) return alert("Auth0 not ready");
-        const token = await auth0Client.getTokenSilently();
-        const body  = JSON.parse(atob(token.split('.')[1]));
-        const pre = document.getElementById('claims');
-        pre.hidden = false;
-        pre.textContent = JSON.stringify(body, null, 2);
-      } catch (e) {
-        console.error("getTokenSilently error:", e);
-        set('status', 'Could not get token (see console).', false);
-      }
-    });
+  // Buttons
+  window.addEventListener('load', () => {
+    document.getElementById("loginBtn").addEventListener("click", () => auth0Client?.loginWithRedirect());
+    document.getElementById("logoutBtn").addEventListener("click", () => auth0Client?.logout({
+      logoutParams: { returnTo: window.location.origin + "/login.html" }
+    }));
+  });
+</script>
 
-    init();
-  </script>
 </body>
 </html>
