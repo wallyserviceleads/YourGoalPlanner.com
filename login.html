@@ -4,8 +4,7 @@
   <meta charset="utf-8" />
   <title>Login (Debug)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- 1) Load the SDK first. No defer. -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  
   <style>
     body { font-family: system-ui, sans-serif; padding: 20px; max-width: 700px; margin: auto; }
     button { padding: .6rem 1rem; font-size: 1rem; margin-right: .5rem; }
@@ -30,11 +29,11 @@
   <div class="row"><button id="showClaimsBtn">Show Access Token Claims</button></div>
   <pre id="claims" hidden></pre>
 
- <!-- Load SDK first, no defer -->
+<!-- 1) Load the Auth0 SDK FIRST (no defer/async) -->
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 
 <script>
-  // put your real values here
+  // ⬇️ set your real values
   const AUTH0_DOMAIN   = "dev-74ja1cuagr1s3c2c.us.auth0.com";
   const AUTH0_CLIENTID = "KvD2HPQsxFeOFIezMtdaAFlFtqBQST8m";
   const AUTH0_AUDIENCE = "https://calendar.yourgoalplanner.com/api";
@@ -42,7 +41,8 @@
   let auth0Client;
 
   async function init() {
-    if (typeof createAuth0Client !== "function") {
+    // Guard: confirm SDK is present
+    if (typeof window.createAuth0Client !== "function") {
       console.error("SDK not ready");
       document.getElementById("status").textContent = "SDK not ready";
       return;
@@ -57,9 +57,14 @@
       }
     });
 
+    // Finish the Auth0 redirect if returning from login
     if (location.search.includes("code=") || location.search.includes("state=")) {
-      await auth0Client.handleRedirectCallback();
-      history.replaceState({}, document.title, "/login.html");
+      try {
+        await auth0Client.handleRedirectCallback();
+        history.replaceState({}, document.title, "/login.html");
+      } catch (e) {
+        console.error("handleRedirectCallback error:", e);
+      }
     }
 
     const authed = await auth0Client.isAuthenticated();
@@ -68,17 +73,20 @@
     document.getElementById("logoutBtn").style.display = authed ? "" : "none";
   }
 
-  // ✅ wait for full page load so SDK is guaranteed present
-  window.addEventListener('load', init);
+  // ✅ Wait for full page load so the SDK is definitely available
+  window.addEventListener("load", () => {
+    init();
 
-  // Buttons
-  window.addEventListener('load', () => {
-    document.getElementById("loginBtn").addEventListener("click", () => auth0Client?.loginWithRedirect());
-    document.getElementById("logoutBtn").addEventListener("click", () => auth0Client?.logout({
-      logoutParams: { returnTo: window.location.origin + "/login.html" }
-    }));
+    // Wire buttons after load
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      auth0Client?.loginWithRedirect();
+    });
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      auth0Client?.logout({ logoutParams: { returnTo: window.location.origin + "/login.html" } });
+    });
   });
 </script>
+
 
 </body>
 </html>
