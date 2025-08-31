@@ -7,7 +7,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@serverless-jwt/netlify": "^0.2.0"
+    "@serverless-jwt/netlify": "^0.3.2"
   }
 }
 
