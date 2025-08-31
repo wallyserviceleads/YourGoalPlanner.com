@@ -20,10 +20,10 @@
 
     async function initAuth0() {
       auth0Client = await createAuth0Client({
-        domain:  "{{ AUTH0_DOMAIN }}",        // replace with your domain
-        clientId:"{{ AUTH0_CLIENT_ID }}",     // replace with your client ID
+        domain:  "dev-74ja1cuagr1s3c2c.us.auth0.com",        // replace with your domain
+        clientId:"KvD2HPQsxFeOFIezMtdaAFlFtqBQST8m",     // replace with your client ID
         authorizationParams: {
-          audience: "{{ AUTH0_AUDIENCE }}",   // the API identifier you created
+          audience: "https://calendar.yourgoalplanner.com",   // the API identifier you created
           redirect_uri: window.location.origin + "/login.html"
         }
       });
