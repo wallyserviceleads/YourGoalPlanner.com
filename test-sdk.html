@@ -4,24 +4,33 @@
   <meta charset="utf-8" />
   <title>Auth0 SDK Smoke Test</title>
   <!-- Load ONLY the SDK -->
-  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-</head>
-<body>
-  <pre id="out">Loading…</pre>
   <script>
-    (function () {
-      const out = document.getElementById('out');
-      function write(msg) { out.textContent += "\n" + msg; }
+  (function loadAuth0SDK() {
+    const urls = [
+      "https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js",
+      "https://cdn.jsdelivr.net/npm/@auth0/auth0-spa-js@2.1.3/dist/auth0-spa-js.production.js",
+      "/vendor/auth0/auth0-spa-js.production.js"
+    ];
+    function next(i) {
+      if (i >= urls.length) {
+        document.getElementById('out').textContent += "\nAll SDK sources failed";
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = urls[i];
+      s.onload = () => {
+        document.getElementById('out').textContent += "\nLoaded from " + urls[i] +
+          " → typeof createAuth0Client = " + (typeof window.createAuth0Client);
+      };
+      s.onerror = () => {
+        document.getElementById('out').textContent += "\nFailed " + urls[i];
+        next(i + 1);
+      };
+      document.head.appendChild(s);
+    }
+    next(0);
+  })();
+</script>
 
-      write("After script tag:");
-      write("typeof createAuth0Client = " + (typeof window.createAuth0Client));
-
-      // Wait a tick in case of slow parse
-      setTimeout(() => {
-        write("200ms later:");
-        write("typeof createAuth0Client = " + (typeof window.createAuth0Client));
-      }, 200);
-    })();
-  </script>
 </body>
 </html>
