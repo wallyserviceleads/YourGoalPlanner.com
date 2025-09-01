@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Auth0 SDK Smoke Test</title>
+  <!-- Load ONLY the SDK -->
+  <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+</head>
+<body>
+  <pre id="out">Loading…</pre>
+  <script>
+    (function () {
+      const out = document.getElementById('out');
+      function write(msg) { out.textContent += "\n" + msg; }
+
+      write("After script tag:");
+      write("typeof createAuth0Client = " + (typeof window.createAuth0Client));
+
+      // Wait a tick in case of slow parse
+      setTimeout(() => {
+        write("200ms later:");
+        write("typeof createAuth0Client = " + (typeof window.createAuth0Client));
+      }, 200);
+    })();
+  </script>
+</body>
+</html>
