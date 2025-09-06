@@ -8,10 +8,11 @@
 
   <!-- SDK: mark when it finishes loading -->
   <script
-    src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-    onload="window.__AUTH0_SDK_READY__=true"
-    onerror="console.error('Auth0 SDK failed to load');window.__AUTH0_SDK_READY__=false">
-  </script>
+  src="/vendor/auth0/auth0-spa-js.production.js"
+  onload="window.__AUTH0_SDK_READY__=true"
+  onerror="console.error('Local Auth0 SDK failed to load')">
+</script>
+
 </head>
 <body>
   <h1>Auth0 Login (Debug)</h1>
