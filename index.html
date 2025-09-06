@@ -10,8 +10,8 @@
 <button onclick="auth.logout()">Log out</button>
 <button onclick="auth.callProtectedApi()">Call API</button>
 
-<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-<script>
+<script src="/vendor/auth0/auth0-spa-js.production.js" onload="window.__AUTH0_SDK_READY__=true"></script>
+
   netlifyIdentity.on('login', user => {
     // user.email, user.id
     // redirect to /app or reload
