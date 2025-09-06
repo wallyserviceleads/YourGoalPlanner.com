@@ -1,23 +1,4 @@
 <!DOCTYPE html>
-<script>
-  // Grab ?cid= from the page URL and remember it
-  const qp = new URLSearchParams(location.search);
-  const cid = qp.get('cid');
-  if (cid) localStorage.setItem('ghlContactId', cid);
-</script>
-
-<button onclick="auth.login()">Log in</button>
-<button onclick="auth.logout()">Log out</button>
-<button onclick="auth.callProtectedApi()">Call API</button>
-
-<script src="/vendor/auth0/auth0-spa-js.production.js" onload="window.__AUTH0_SDK_READY__=true"></script>
-
-  netlifyIdentity.on('login', user => {
-    // user.email, user.id
-    // redirect to /app or reload
-  });
-</script>
-
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
@@ -25,6 +6,12 @@
   <title>Goal Tracking Calendar</title>
   <link rel="stylesheet" href="style.css"/>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml"/>
+  <script>
+    // Grab ?cid= from the page URL and remember it
+    const qp = new URLSearchParams(location.search);
+    const cid = qp.get('cid');
+    if (cid) localStorage.setItem('ghlContactId', cid);
+  </script>
   <script defer src="config.js"></script>
   <script defer src="script.js"></script>
 </head>
