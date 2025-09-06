@@ -31,23 +31,35 @@
   // ⬇️ your real values
   const AUTH0_DOMAIN   = "dev-74ja1cuagr1s3c2c.us.auth0.com";
   const AUTH0_CLIENTID = "KvD2HPQsxFeOFIezMtdaAFlFtqBQST8m";
-  const AUTH0_AUDIENCE = "https://calendar.yourgoalplanner.com/api";
+    const AUTH0_AUDIENCE = "https://calendar.yourgoalplanner.com/api";
 
-  // make available in console
-  window.auth0Client = null;
+    // make available in console
+    window.auth0Client = null;
 
   function set(id, txt, ok){
-    const el=document.getElementById(id);
-    if(!el) return;
-    el.textContent = txt;
-    if(ok===true){el.classList.add('ok');el.classList.remove('bad')}
-    if(ok===false){el.classList.add('bad');el.classList.remove('ok')}
-  }
+      const el=document.getElementById(id);
+      if(!el) return;
+      el.textContent = txt;
+      if(ok===true){el.classList.add('ok');el.classList.remove('bad')}
+      if(ok===false){el.classList.add('bad');el.classList.remove('ok')}
+    }
 
-  async function waitForSDK(ms=8000){
-    const t0=Date.now();
-    while (!window.__AUTH0_SDK_READY__ || typeof window.createAuth0Client!=="function"){
-      if (Date.now()-t0>ms) throw new Error("Auth0 SDK did not become ready");
+    const sdkScript = document.querySelector('script[src*="auth0-spa-js"]');
+    if (sdkScript) {
+      sdkScript.addEventListener('load', () => { window.__AUTH0_SDK_READY__ = true; });
+      sdkScript.addEventListener('error', () => {
+        console.error('Auth0 SDK failed to load');
+        set('status', 'Auth0 SDK failed to load', false);
+      });
+    } else {
+      console.error('Auth0 SDK script not found');
+      set('status', 'Auth0 SDK script not found', false);
+    }
+
+   async function waitForSDK(ms=8000){
+      const t0=Date.now();
+      while (!window.__AUTH0_SDK_READY__ || typeof window.createAuth0Client!=="function"){
+        if (Date.now()-t0>ms) throw new Error("Auth0 SDK did not become ready");
       await new Promise(r=>setTimeout(r,100));
     }
     set('sdk','yes',true);
