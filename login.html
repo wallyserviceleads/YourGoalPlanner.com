@@ -2,120 +2,57 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Login (Debug)</title>
+  <title>Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>body{font-family:system-ui,sans-serif;padding:20px;max-width:700px;margin:auto}button{padding:.6rem 1rem;font-size:1rem;margin-right:.5rem}pre{background:#f6f8fa;padding:10px;overflow:auto}.row{margin:10px 0}.ok{color:#0a0}.bad{color:#a00}</style>
-
-<!-- Auth0 SDK: load from CDN and mark when ready -->
-  <script
-     src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"
-    onload="window.__AUTH0_SDK_READY__=true"
-    onerror="console.error('Auth0 SDK failed to load')">
-  </script>
-
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    button { padding: .6rem 1rem; font-size: 1rem; margin-right: .5rem; }
+  </style>
+  <script src="/vendor/auth0/auth0-spa-js.production.js"></script>
 </head>
 <body>
-  <h1>Auth0 Login (Debug)</h1>
-
-  <div class="row"><strong>Status:</strong> <span id="status">Booting…</span></div>
-  <div class="row">
-    <button id="loginBtn" style="display:none">Login</button>
+  <h1>Welcome</h1>
+  <div>
+    <button id="loginBtn">Login</button>
     <button id="logoutBtn" style="display:none">Logout</button>
   </div>
-  <div class="row">SDK loaded: <span id="sdk" class="bad">no</span></div>
-  <div class="row">Authenticated: <span id="authed">unknown</span></div>
-  <div class="row"><button id="showClaimsBtn">Show Access Token Claims</button></div>
-  <pre id="claims" hidden></pre>
 
 <script>
-  // ⬇️ your real values
   const AUTH0_DOMAIN   = "dev-74ja1cuagr1s3c2c.us.auth0.com";
   const AUTH0_CLIENTID = "KvD2HPQsxFeOFIezMtdaAFlFtqBQST8m";
-    const AUTH0_AUDIENCE = "https://calendar.yourgoalplanner.com/api";
+  const AUTH0_AUDIENCE = "https://calendar.yourgoalplanner.com/api";
 
-    // make available in console
-    window.auth0Client = null;
+  let auth0Client;
 
-  function set(id, txt, ok){
-      const el=document.getElementById(id);
-      if(!el) return;
-      el.textContent = txt;
-      if(ok===true){el.classList.add('ok');el.classList.remove('bad')}
-      if(ok===false){el.classList.add('bad');el.classList.remove('ok')}
-    }
-
-    const sdkScript = document.querySelector('script[src*="auth0-spa-js"]');
-    if (sdkScript) {
-      sdkScript.addEventListener('load', () => { window.__AUTH0_SDK_READY__ = true; });
-      sdkScript.addEventListener('error', () => {
-        console.error('Auth0 SDK failed to load');
-        set('status', 'Auth0 SDK failed to load', false);
-      });
-    } else {
-      console.error('Auth0 SDK script not found');
-      set('status', 'Auth0 SDK script not found', false);
-    }
-
-   async function waitForSDK(ms=8000){
-      const t0=Date.now();
-      while (!window.__AUTH0_SDK_READY__ || typeof window.createAuth0Client!=="function"){
-        if (Date.now()-t0>ms) throw new Error("Auth0 SDK did not become ready");
-      await new Promise(r=>setTimeout(r,100));
-    }
-    set('sdk','yes',true);
-  }
-
-  async function init(){
-    try{
-      await waitForSDK();
-
-      window.auth0Client = await createAuth0Client({
-        domain: AUTH0_DOMAIN,
-        clientId: AUTH0_CLIENTID,
-        authorizationParams: {
-          audience: AUTH0_AUDIENCE,
-          redirect_uri: window.location.origin + "/login.html"
-        }
-      });
-
-      if (location.search.includes("code=") || location.search.includes("state=")) {
-        try { await window.auth0Client.handleRedirectCallback(); }
-        catch(e){ console.error("handleRedirectCallback error:", e); }
-        history.replaceState({}, document.title, "/login.html");
+  async function init() {
+    auth0Client = await createAuth0Client({
+      domain: AUTH0_DOMAIN,
+      clientId: AUTH0_CLIENTID,
+      authorizationParams: {
+        audience: AUTH0_AUDIENCE,
+        redirect_uri: window.location.origin + "/login.html"
       }
+    });
 
-      const isAuthed = await window.auth0Client.isAuthenticated();
-      set('authed', String(isAuthed), isAuthed);
-      set('status', isAuthed ? "You are logged in." : "You are logged out.", isAuthed);
-      document.getElementById('loginBtn').style.display  = isAuthed ? "none" : "";
-      document.getElementById('logoutBtn').style.display = isAuthed ? "" : "none";
-
-      // buttons
-      document.getElementById('loginBtn').onclick = () => window.auth0Client?.loginWithRedirect();
-      document.getElementById('logoutBtn').onclick = () => window.auth0Client?.logout({
-        logoutParams: { returnTo: window.location.origin + "/login.html" }
-      });
-
-      document.getElementById('showClaimsBtn').onclick = async () => {
-        try {
-          const t = await window.auth0Client.getTokenSilently();
-          const body = JSON.parse(atob(t.split('.')[1]));
-          const pre = document.getElementById('claims');
-          pre.hidden = false;
-          pre.textContent = JSON.stringify(body, null, 2);
-        } catch (e) {
-          console.error("getTokenSilently error:", e);
-          set('status', 'Could not get token (see console).', false);
-        }
-      };
-    } catch(e){
-      console.error("Init error:", e);
-      set('status',"SDK not ready or blocked. See console.",false);
+    // Handle redirect after login
+    if (location.search.includes("code=") || location.search.includes("state=")) {
+      try { await auth0Client.handleRedirectCallback(); }
+      catch(e){ console.error("Redirect error:", e); }
+      history.replaceState({}, document.title, "/login.html");
     }
+
+    const isAuthed = await auth0Client.isAuthenticated();
+    document.getElementById("loginBtn").style.display  = isAuthed ? "none" : "";
+    document.getElementById("logoutBtn").style.display = isAuthed ? "" : "none";
   }
 
-  // start after full load
-  window.addEventListener('load', init);
+  window.addEventListener("load", () => {
+    init();
+    document.getElementById("loginBtn").onclick  = () => auth0Client.loginWithRedirect();
+    document.getElementById("logoutBtn").onclick = () => auth0Client.logout({
+      logoutParams: { returnTo: window.location.origin + "/login.html" }
+    });
+  });
 </script>
 </body>
 </html>
