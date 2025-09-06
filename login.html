@@ -13,7 +13,7 @@
 <body>
   <h1>Welcome</h1>
   <div>
-    <button id="loginBtn">Login</button>
+   <button id="loginBtn" disabled>Login</button>
     <button id="logoutBtn" style="display:none">Logout</button>
   </div>
 
@@ -46,10 +46,13 @@
     document.getElementById("logoutBtn").style.display = isAuthed ? "" : "none";
   }
 
-  window.addEventListener("load", () => {
-    init();
-    document.getElementById("loginBtn").onclick  = () => auth0Client.loginWithRedirect();
-    document.getElementById("logoutBtn").onclick = () => auth0Client.logout({
+  window.addEventListener("load", async () => {
+    await init();                    // ensures auth0Client exists
+    const loginBtn  = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    loginBtn.disabled = false;
+    loginBtn.onclick  = () => auth0Client.loginWithRedirect();
+    logoutBtn.onclick = () => auth0Client.logout({
       logoutParams: { returnTo: window.location.origin + "/login.html" }
     });
   });
