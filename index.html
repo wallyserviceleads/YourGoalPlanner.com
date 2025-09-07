@@ -27,6 +27,15 @@
     </div>
   </header>
 
+  <button id="btn-login" disabled>Log in</button>
+  <button id="btn-logout" disabled>Log out</button>
+
+  <div id="gated-content" class="hidden">
+    <p>You're seeing this because you're <strong>logged in</strong>.</p>
+    <label>Access token:<pre id="ipt-access-token"></pre></label>
+    <label>User profile:<pre id="ipt-user-profile"></pre></label>
+  </div>
+  
   <section class="kpis">
     <div class="kpi"><div class="kpi-label">Daily Target</div><div id="kpiDaily" class="kpi-value">—</div></div>
     <div class="kpi"><div class="kpi-label">Weekly Target</div><div id="kpiWeekly" class="kpi-value">—</div></div>
