@@ -22,3 +22,7 @@ node server.js
 ```
 
 Then open <http://localhost:3000> in your browser.
+
+## Auth0 configuration
+
+Ensure your Auth0 application includes the app's origin in its **Allowed Logout URLs**. For local development this is typically `http://localhost:3000`. This value must match the `returnTo` parameter used when logging out (`window.location.origin`).
