@@ -180,17 +180,17 @@
 <!-- Auth0 SPA SDK -->
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
 <script>
-  // 🔁 use the same three values you used on login.html
-  const AUTH0_DOMAIN   = "dev-74ja1cuagr1s3c2c.us.auth0.com";
-  const AUTH0_CLIENTID = "KvD2HPQsxFeOFIezMtdaAFlFtqBQST8m";
-  const AUTH0_AUDIENCE = "https://calendar.yourgoalplanner.com/api";
-
   let auth0Client;
 
   async function boot() {
-    // Create the client
+    const response = await fetch("/auth_config.json");
+    const config = await response.json();
+
+    auth0Client = await auth0.createAuth0Client({
+      domain: config.domain,
+      clientId: config.clientId,    // Create the client
      auth0Client = await auth0.createAuth0Client({
-      domain: AUTH0_DOMAIN,
+       audience: "https://calendar.yourgoalplanner.com/api",
       clientId: AUTH0_CLIENTID,
       authorizationParams: {
         audience: AUTH0_AUDIENCE,
@@ -198,14 +198,11 @@
       }
     });
 
-    // If not logged in → send to login
     const authed = await auth0Client.isAuthenticated();
     if (!authed) {
       window.location.href = "/login.html";
       return;
     }
-
-    // Logged in: get a token and call your protected Function
     const token = await auth0Client.getTokenSilently();
     const res = await fetch("/.netlify/functions/whoami", {
       headers: { Authorization: `Bearer ${token}` }
@@ -219,25 +216,21 @@
     const data = await res.json();
     console.log("whoami ->", data);
 
-    // (Optional) show something on the page
     const el = document.getElementById("whoami") || document.body.appendChild(document.createElement("div"));
     el.id = "whoami";
     el.style.margin = "1rem 0";
     el.textContent = `Logged in as: ${data.email || "(no email)"} — Contact ID: ${data.contactId || "n/a"}`;
   }
 
-  boot().catch(err => {
-    console.error("Auth boot error:", err);
-   window.addEventListener('load', () => {
+  window.addEventListener("load", () => {
     boot().catch(err => {
       console.error("Auth boot error:", err);
-      // If anything odd happens, send to login again
       window.location.href = "/login.html";
     });
-
-  <div id="whoami"></div>
-
-<script defer src="config.js"></script>
+     });
+</script>
+<div id="whoami"></div>
+  <script defer src="config.js"></script>
   <script defer src="script.js"></script>                           
 </body>
 </html>
