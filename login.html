@@ -27,11 +27,8 @@
     
     auth0Client = await auth0.createAuth0Client({
       domain: config.domain,
-      clientId: config.clientId,      
-      domain: AUTH0_DOMAIN,
-     audience: "https://calendar.yourgoalplanner.com/api",
+      clientId: config.clientId,
       authorizationParams: {
-        audience: AUTH0_AUDIENCE,
         redirect_uri: window.location.origin + "/login.html"
       }
     });
@@ -55,9 +52,9 @@
     loginBtn.disabled = false;
     loginBtn.onclick  = () => auth0Client.loginWithRedirect();
     logoutBtn.onclick = () => auth0Client.logout({
-       logoutParams: {
+      logoutParams: {
         // Must be listed under "Allowed Logout URLs"
-        returnTo: window.location.origin
+        returnTo: window.location.origin + "/login.html"  
       }
          logoutParams: { returnTo: window.location.origin + "/login.html" }
     });
