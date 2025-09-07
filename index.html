@@ -187,59 +187,9 @@
   window.addEventListener('load', () => pingLogin('last login'));
 </script>
 <!-- Auth0 SPA SDK -->
-<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
-<script>
-  let auth0Client;
-
-  async function boot() {
-    const response = await fetch("/auth_config.json");
-    const config = await response.json();
-
-    auth0Client = await auth0.createAuth0Client({
-      domain: config.domain,
-      clientId: config.clientId,    // Create the client
-     auth0Client = await auth0.createAuth0Client({
-       audience: "https://calendar.yourgoalplanner.com/api",
-      clientId: AUTH0_CLIENTID,
-      authorizationParams: {
-        audience: AUTH0_AUDIENCE,
-        redirect_uri: window.location.origin + "/login.html"
-      }
-    });
-
-    const authed = await auth0Client.isAuthenticated();
-    if (!authed) {
-      window.location.href = "/login.html";
-      return;
-    }
-    const token = await auth0Client.getTokenSilently();
-    const res = await fetch("/.netlify/functions/whoami", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    if (!res.ok) {
-      console.error("whoami error:", res.status);
-      return;
-    }
-
-    const data = await res.json();
-    console.log("whoami ->", data);
-
-    const el = document.getElementById("whoami") || document.body.appendChild(document.createElement("div"));
-    el.id = "whoami";
-    el.style.margin = "1rem 0";
-    el.textContent = `Logged in as: ${data.email || "(no email)"} — Contact ID: ${data.contactId || "n/a"}`;
-  }
-
-  window.addEventListener("load", () => {
-    boot().catch(err => {
-      console.error("Auth boot error:", err);
-      window.location.href = "/login.html";
-    });
-     });
-</script>
-<div id="whoami"></div>
-  <script defer src="config.js"></script>
-  <script defer src="script.js"></script>                           
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+<script src="/js/app.js"></script>
+<script defer src="/config.js"></script>
+<script defer src="/script.js"></script>                           
 </body>
 </html>
