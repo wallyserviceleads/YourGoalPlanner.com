@@ -12,3 +12,13 @@
   - Monthly = daily × working days in current month
   - Quarterly = daily × working days in current quarter
 - **Range Progress** sums entries within the date range
+
+## Local development
+
+Run the included Express server to serve the site locally:
+
+```bash
+node server.js
+```
+
+Then open <http://localhost:3000> in your browser.
