@@ -8,7 +8,6 @@
     body { font-family: system-ui, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
     button { padding: .6rem 1rem; font-size: 1rem; margin-right: .5rem; }
   </style>
-  <script src="/vendor/auth0/auth0-spa-js.production.js"></script>
 </head>
 <body>
   <h1>Welcome</h1>
@@ -17,7 +16,9 @@
     <button id="logoutBtn" style="display:none">Logout</button>
   </div>
 
-<script>
+<!-- Auth0 SPA SDK -->
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script>
   const AUTH0_DOMAIN   = "dev-74ja1cuagr1s3c2c.us.auth0.com";
   const AUTH0_CLIENTID = "KvD2HPQsxFeOFIezMtdaAFlFtqBQST8m";
   const AUTH0_AUDIENCE = "https://calendar.yourgoalplanner.com/api";
@@ -25,7 +26,7 @@
   let auth0Client;
 
   async function init() {
-    auth0Client = await createAuth0Client({
+    auth0Client = await auth0.createAuth0Client({
       domain: AUTH0_DOMAIN,
       clientId: AUTH0_CLIENTID,
       authorizationParams: {
