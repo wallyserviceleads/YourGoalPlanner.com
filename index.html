@@ -12,8 +12,6 @@
     const cid = qp.get('cid');
     if (cid) localStorage.setItem('ghlContactId', cid);
   </script>
-  <script defer src="config.js"></script>
-  <script defer src="script.js"></script>
 </head>
 <body>
   <header class="app-header">
@@ -191,7 +189,7 @@
 
   async function boot() {
     // Create the client
-    auth0Client = await createAuth0Client({
+     auth0Client = await auth0.createAuth0Client({
       domain: AUTH0_DOMAIN,
       clientId: AUTH0_CLIENTID,
       authorizationParams: {
@@ -230,12 +228,16 @@
 
   boot().catch(err => {
     console.error("Auth boot error:", err);
-    // If anything odd happens, send to login again
-    window.location.href = "/login.html";
-  });
-</script>
+   window.addEventListener('load', () => {
+    boot().catch(err => {
+      console.error("Auth boot error:", err);
+      // If anything odd happens, send to login again
+      window.location.href = "/login.html";
+    });
 
   <div id="whoami"></div>
 
+<script defer src="config.js"></script>
+  <script defer src="script.js"></script>                           
 </body>
 </html>
