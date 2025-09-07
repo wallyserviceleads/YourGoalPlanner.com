@@ -19,16 +19,17 @@
 <!-- Auth0 SPA SDK -->
 <script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
   <script>
-  const AUTH0_DOMAIN   = "dev-74ja1cuagr1s3c2c.us.auth0.com";
-  const AUTH0_CLIENTID = "KvD2HPQsxFeOFIezMtdaAFlFtqBQST8m";
-  const AUTH0_AUDIENCE = "https://calendar.yourgoalplanner.com/api";
-
   let auth0Client;
 
   async function init() {
+    const response = await fetch("/auth_config.json");
+    const config = await response.json();
+    
     auth0Client = await auth0.createAuth0Client({
+      domain: config.domain,
+      clientId: config.clientId,      
       domain: AUTH0_DOMAIN,
-      clientId: AUTH0_CLIENTID,
+     audience: "https://calendar.yourgoalplanner.com/api",
       authorizationParams: {
         audience: AUTH0_AUDIENCE,
         redirect_uri: window.location.origin + "/login.html"
