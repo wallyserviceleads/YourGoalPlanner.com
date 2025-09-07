@@ -55,7 +55,11 @@
     loginBtn.disabled = false;
     loginBtn.onclick  = () => auth0Client.loginWithRedirect();
     logoutBtn.onclick = () => auth0Client.logout({
-      logoutParams: { returnTo: window.location.origin + "/login.html" }
+       logoutParams: {
+        // Must be listed under "Allowed Logout URLs"
+        returnTo: window.location.origin
+      }
+         logoutParams: { returnTo: window.location.origin + "/login.html" }
     });
   });
 </script>
