@@ -234,23 +234,36 @@
     const isAuth = await auth0Client.isAuthenticated();
     document.body.classList.toggle("authed", isAuth);
 
-    const who = document.getElementById("whoami");
-    if (isAuth && who) {
-      const user = await auth0Client.getUser();
-      who.textContent = user?.email || user?.name || "(unknown)";
+    const loginBtn = document.getElementById("btn-login");
+    const logoutBtn = document.getElementById("btn-logout");
+    if (loginBtn) loginBtn.classList.toggle("hidden", isAuth);
+    if (logoutBtn) logoutBtn.classList.toggle("hidden", !isAuth);
+
+    const gated = document.getElementById("gated-content");
+    if (gated) gated.classList.toggle("hidden", !isAuth);    const who = document.getElementById("whoami");
+   if (who) {
+      if (isAuth) {
+        const user = await auth0Client.getUser();
+        who.textContent = user?.email || user?.name || "(unknown)";
+      } else {
+        who.textContent = "";
+      }
     }
 
-    if (isAuth) {
-      const token = await auth0Client.getTokenSilently();
-      fetch("/.netlify/functions/track-login", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ event: "login" })
-      }).catch(()=>{});
+    if (!isAuth) {
+      // App shell remains hidden; user must log in
+      return;
     }
+    
+    const token = await auth0Client.getTokenSilently();
+    fetch("/.netlify/functions/track-login", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ event: "login" })
+    }).catch(()=>{});
   }
 
   window.addEventListener("load", initAuth);
