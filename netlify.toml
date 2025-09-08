@@ -19,4 +19,5 @@
   GHL_LAST_USAGE_FIELD_ID = ""
   ALLOWED_ORIGINS = "animated-entremet-6d0e30.netlify.app"
 
-  
+  [functions]
+  node_bundler = "esbuild"
