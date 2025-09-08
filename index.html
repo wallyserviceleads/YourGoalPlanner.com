@@ -29,6 +29,7 @@
 
   <button id="btn-login" onclick="login()" disabled>Log in</button>
   <button id="btn-logout" onclick="logout()" disabled>Log out</button>
+  <div id="error-msg" class="hidden" style="color:red"></div>
   <div id="whoami"></div>
 
   <div id="gated-content" class="hidden">
@@ -208,13 +209,26 @@
   async function initAuth() {
     auth0Client = await auth0.createAuth0Client(auth0Config);
 
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get("error");
+    const errDesc = params.get("error_description");
+    const loginBtn = document.getElementById("btn-login");
+    if (err && errDesc) {
+      const msgEl = document.getElementById("error-msg");
+      if (msgEl) {
+        msgEl.textContent = errDesc;
+        msgEl.classList.remove("hidden");
+      }
+      console.error(errDesc);
+      if (loginBtn) loginBtn.removeAttribute("disabled");
+    }
+    
     const q = window.location.search;
     if (q.includes("code=") && q.includes("state=")) {
       await auth0Client.handleRedirectCallback();
       window.history.replaceState({}, document.title, "/");
     }
 
-    const loginBtn = document.getElementById("btn-login");
     const logoutBtn = document.getElementById("btn-logout");
     if (loginBtn) loginBtn.disabled = false;
     if (logoutBtn) logoutBtn.disabled = false;
