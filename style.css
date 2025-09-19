@@ -42,6 +42,11 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:14px/1.
 
 .pill{display:inline-block;width:10px;height:10px;border-radius:999px;margin-right:6px;vertical-align:middle}
 .pill.goal{background:var(--goal)}
+.pill.goal-low{background:#d64545}
+.pill.goal-mid{background:#f6c343}
+.pill.goal-high{background:#3ac779}
+.pace-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-right:6px;font-size:14px;line-height:1;vertical-align:middle}
+.pace-icon.star,.pace-icon.crown{color:#f5c542;text-shadow:0 0 4px rgba(0,0,0,.25)}
 
 dialog::backdrop { background: rgba(0,0,0,.5); }
 #settingsModal{border:none;border-radius:12px;max-width:760px;width:96vw;background:var(--panel);color:var(--text);}
