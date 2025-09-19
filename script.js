@@ -327,7 +327,7 @@ function addEntryFlow(date){
 
       const hasPace = isWork && Object.prototype.hasOwnProperty.call(paceByDate, isoDate);
       const paceValue = hasPace ? paceByDate[isoDate] : null;
-       const dayTotal = total(date);
+      const dayTotal = total(date);
       let pace = "";
       if(hasPace && Number.isFinite(paceValue)){
         const { indicator, title: paceTitle } = dailyGoalIndicator(paceValue, dayTotal);
