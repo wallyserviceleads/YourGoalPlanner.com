@@ -71,7 +71,10 @@ try {
   const goalEndInp = $("#goalEnd");
   const goalProgressInp = $("#goalProgress");
   const themeToggle = $("#themeToggle");
-
+  const sheetLinkInput = $("#sheetLink");
+  const importSheetBtn = $("#importSheetBtn");
+  const sheetStatus = $("#sheetStatus");
+  
   const monthLabel = $("#monthLabel");
   const grid = $("#calendarGrid");
   const prevBtn = $("#prevMonth");
@@ -92,7 +95,14 @@ try {
   const loadJSON = (k,f)=>{ try{const r=localStorage.getItem(k); return r?JSON.parse(r):f;}catch{return f;} };
   const saveJSON = (k,v)=>{ try{localStorage.setItem(k, JSON.stringify(v)); }catch{} };
 
-  // State
+  function showSheetStatus(message = "", kind = "info") {
+    if (!sheetStatus) return;
+    sheetStatus.textContent = message;
+    if (!message) { delete sheetStatus.dataset.kind; return; }
+    sheetStatus.dataset.kind = kind || "info";
+  }
+   
+   // State
   let current = new Date(); current.setDate(1);
   let settings = loadJSON(SETTINGS_KEY, {
     goalName: cfg.DEFAULT_GOAL_NAME || "Goal",
@@ -102,7 +112,9 @@ try {
     goalProgress: Number(cfg.DEFAULT_GOAL_PROGRESS || 0),
     theme: cfg.DEFAULT_THEME || "dark",
     weekdays: {0:false,1:true,2:true,3:true,4:true,5:true,6:true},
+  sheetUrl: cfg.DEFAULT_SHEET_URL || "",
   });
+    if (typeof settings.sheetUrl !== "string") settings.sheetUrl = "";
   let store = loadJSON(DATA_KEY, {});
 
   // Theme
@@ -118,6 +130,125 @@ try {
   const eod = (d)=>{ const x=new Date(d); x.setHours(23,59,59,999); return x; };
   const dim = (y,m)=> new Date(y,m+1,0).getDate();
   const money = (n=0)=>"$"+(Math.round(+n)||0).toLocaleString();
+
+   function normalizeSheetUrl(link){
+    if(!link) return "";
+    const trimmed = String(link).trim();
+    if(!trimmed) return "";
+    if(/export\?format=csv/i.test(trimmed) || /output=csv/i.test(trimmed)) return trimmed;
+    const idMatch = trimmed.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+    if(idMatch){
+      const gidMatch = trimmed.match(/[?&#]gid=(\d+)/);
+      const gid = gidMatch ? gidMatch[1] : "0";
+      return `https://docs.google.com/spreadsheets/d/${idMatch[1]}/export?format=csv&gid=${gid}`;
+    }
+    return trimmed;
+  }
+
+  function parseCSV(text){
+    const rows = [];
+    let cur = [];
+    let val = "";
+    let inQuotes = false;
+    for(let i=0;i<text.length;i++){
+      const ch = text[i];
+      if(inQuotes){
+        if(ch === '"'){
+          const next = text[i+1];
+          if(next === '"'){ val += '"'; i++; }
+          else { inQuotes = false; }
+        } else {
+          val += ch;
+        }
+      } else {
+        if(ch === '"') inQuotes = true;
+        else if(ch === ','){ cur.push(val); val = ""; }
+        else if(ch === '\r'){ continue; }
+        else if(ch === '\n'){ cur.push(val); rows.push(cur); cur = []; val = ""; }
+        else { val += ch; }
+      }
+    }
+    cur.push(val);
+    rows.push(cur);
+    return rows;
+  }
+
+  function parseSheetDate(value){
+    if(value == null) return null;
+    if(value instanceof Date && !Number.isNaN(value.getTime())){
+      const d = new Date(value); d.setHours(0,0,0,0); return d;
+    }
+    if(typeof value === "number" && Number.isFinite(value)){
+      const base = new Date(Date.UTC(1899,11,30));
+      base.setUTCDate(base.getUTCDate()+Math.floor(value));
+      return new Date(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate());
+    }
+    const str = String(value).trim();
+    if(!str) return null;
+    const parsed = new Date(str);
+    if(!Number.isNaN(parsed.getTime())){
+      const d = new Date(parsed); d.setHours(0,0,0,0); return d;
+    }
+    const slash = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if(slash){
+      let [,mStr,dStr,yStr] = slash;
+      let year = Number(yStr.length === 2 ? (Number(yStr) >= 70 ? 1900 + Number(yStr) : 2000 + Number(yStr)) : Number(yStr));
+      const month = Number(mStr) - 1;
+      const day = Number(dStr);
+      const d = new Date(year, month, day);
+      if(!Number.isNaN(d.getTime())){ d.setHours(0,0,0,0); return d; }
+    }
+    return null;
+  }
+
+  async function importGoogleSheet(url){
+    const csvUrl = normalizeSheetUrl(url);
+    if(!csvUrl) throw new Error("Enter a valid Google Sheet link.");
+    const res = await fetch(csvUrl, { cache: "no-store" });
+    if(!res.ok) throw new Error(`Request failed (${res.status})`);
+    const text = await res.text();
+    if(!text.trim()) throw new Error("The sheet is empty.");
+    if(/<html/i.test(text)) throw new Error("Publish the sheet to the web or use the CSV export link.");
+    const rows = parseCSV(text).filter(row=>Array.isArray(row) && row.some(cell=>String(cell||"").trim()!==""));
+    if(!rows.length) throw new Error("No data rows found.");
+
+    let header = rows[0].map(cell=>String(cell||"").trim());
+    let startIndex = 1;
+    const headerLower = header.map(cell=>cell.toLowerCase());
+    let dateIdx = headerLower.indexOf("date");
+    let labelIdx = headerLower.indexOf("label");
+    if(labelIdx === -1) labelIdx = headerLower.indexOf("name");
+    if(labelIdx === -1) labelIdx = headerLower.indexOf("description");
+    let amountIdx = headerLower.findIndex(cell=>["amount","value","total","sales","revenue"].includes(cell));
+    if(dateIdx === -1 || amountIdx === -1){
+      dateIdx = 0;
+      if(labelIdx === -1) labelIdx = 1;
+      if(amountIdx === -1) amountIdx = 2;
+      startIndex = 0;
+    }
+
+    const imported = {};
+    let entriesCount = 0;
+    for(let r=startIndex; r<rows.length; r++){
+      const row = rows[r];
+      if(!row) continue;
+      const rawDate = row[dateIdx];
+      const date = parseSheetDate(rawDate);
+      if(!date) continue;
+      const rawAmount = amountIdx < row.length ? row[amountIdx] : undefined;
+      const amount = Number(String(rawAmount||"").replace(/[^0-9.\-]/g,""));
+      if(!Number.isFinite(amount) || amount <= 0) continue;
+      const rawLabel = labelIdx != null && labelIdx < row.length ? row[labelIdx] : "";
+      const label = String(rawLabel || "Entry").trim() || "Entry";
+      const key = iso(date);
+      if(!imported[key]) imported[key] = [];
+      imported[key].push({ label: label.slice(0,64), amount: Math.round(amount) });
+      entriesCount++;
+    }
+    const dayCount = Object.keys(imported).length;
+    if(!entriesCount) throw new Error("No valid rows found. Expect Date, Label and Amount columns.");
+    return { store: imported, entries: entriesCount, days: dayCount };
+  }
 
    function dailyGoalIndicator(target, actual){
     if(!Number.isFinite(target)){
@@ -411,7 +542,9 @@ if(arr.length){
     goalEndInp.value = settings.goalEnd || "";
     goalProgressInp.value = Number(settings.goalProgress||0) || "";
     themeToggle.checked = settings.theme === "light";
-    const cont = settingsModal.querySelector(".weekday-toggles");
+    if(sheetLinkInput) sheetLinkInput.value = settings.sheetUrl || "";
+    showSheetStatus("", "info");
+     const cont = settingsModal.querySelector(".weekday-toggles");
     const boxes = Array.from(cont.querySelectorAll("input[type=checkbox][data-wd]"));
     boxes.forEach(cb=>{ const wd = Number(cb.dataset.wd); cb.checked = !!settings.weekdays[wd]; });
   }
@@ -426,6 +559,7 @@ if(arr.length){
     settings.goalEnd = goalEndInp.value || "";
     settings.goalProgress = Number(goalProgressInp.value||0) || 0;
     settings.theme = themeToggle.checked ? "light" : "dark";
+    settings.sheetUrl = (sheetLinkInput?.value || "").trim();
     const boxes = Array.from(settingsModal.querySelectorAll("input[type=checkbox][data-wd]"));
     const mask = {...settings.weekdays};
     boxes.forEach(cb=> mask[Number(cb.dataset.wd)] = !!cb.checked);
@@ -435,6 +569,33 @@ if(arr.length){
     settingsModal.close();
   });
 
+  if(importSheetBtn){
+    importSheetBtn.addEventListener("click", async ()=>{
+      const link = (sheetLinkInput?.value || settings.sheetUrl || "").trim();
+      if(!link){
+        showSheetStatus("Enter the share link to your Google Sheet first.", "error");
+        sheetLinkInput?.focus();
+        return;
+      }
+      settings.sheetUrl = link;
+      saveJSON(SETTINGS_KEY, settings);
+      showSheetStatus("Loading…", "info");
+      importSheetBtn.disabled = true;
+      try {
+        const result = await importGoogleSheet(link);
+        store = result.store;
+        saveJSON(DATA_KEY, store);
+        render();
+        showSheetStatus(`Imported ${result.entries} entr${result.entries === 1 ? "y" : "ies"} across ${result.days} day${result.days === 1 ? "" : "s"}.`, "success");
+      } catch (err) {
+        const message = err && err.message ? err.message : "Unable to import from the sheet.";
+        showSheetStatus(message, "error");
+      } finally {
+        importSheetBtn.disabled = false;
+      }
+    });
+  }
+   
    const helpBtn = $("#helpBtn");
   const helpModal = $("#helpModal");
   if (helpBtn && helpModal) {
@@ -460,11 +621,14 @@ if(arr.length){
       goalProgress: Number(cfg.DEFAULT_GOAL_PROGRESS || 0),
       theme: cfg.DEFAULT_THEME || "dark",
       weekdays: {0:false,1:true,2:true,3:true,4:true,5:true,6:true},
+    sheetUrl: cfg.DEFAULT_SHEET_URL || "",
     };
     store = {};
     saveJSON(SETTINGS_KEY, settings);
     saveJSON(DATA_KEY, store);
-    render(); settingsModal.close();
+    render();
+    showSheetStatus("");
+    settingsModal.close();
   });
 
   // Boot
