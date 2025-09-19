@@ -5,5 +5,6 @@ window.APP_CONFIG = {
     DEFAULT_GOAL_START: "", // YYYY-MM-DD
     DEFAULT_GOAL_END: "",   // YYYY-MM-DD
     DEFAULT_GOAL_PROGRESS: 0,
-    DEFAULT_THEME: "dark"   // 'dark' | 'light'
+   DEFAULT_THEME: "dark",  // 'dark' | 'light'
+    DEFAULT_SHEET_URL: ""
   };
