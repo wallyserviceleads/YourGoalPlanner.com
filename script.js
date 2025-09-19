@@ -193,7 +193,8 @@ function addEntryFlow(date){
     const today = sod(now);
     const daysSoFar = workingDaysInRange(start, today, mask);
 
-let progress = Number(settings.goalProgress||0);
+    const goalAmount = Number(settings.goalAmount||0);
+    let progress = Number(settings.goalProgress||0);
     const s = start? sod(start):null, e = end? eod(end):null;
     for(const [k,arr] of Object.entries(store)){
       const d = new Date(k);
@@ -202,7 +203,30 @@ let progress = Number(settings.goalProgress||0);
       }
     }
      
-    const remainingGoal = Math.max(0, Number(settings.goalAmount||0) - progress);
+    const paceByDate = {};
+    if (start && end && totalWork > 0) {
+      const paceStart = sod(start);
+      const paceEnd = sod(end);
+      if (paceStart <= paceEnd) {
+        let iter = new Date(paceStart);
+        let rollingProgress = Number(settings.goalProgress || 0);
+        let remainingWorkingDays = totalWork;
+        while (iter <= paceEnd) {
+          const dayTotal = total(iter);
+          if (mask[iter.getDay()]) {
+            const remainingGoalForDay = Math.max(0, goalAmount - rollingProgress);
+            const remainingWorkingDaysForDay = Math.max(0, remainingWorkingDays);
+            const dailyTargetForDay = remainingWorkingDaysForDay > 0 ? (remainingGoalForDay / remainingWorkingDaysForDay) : 0;
+            paceByDate[iso(iter)] = dailyTargetForDay;
+            if (remainingWorkingDays > 0) remainingWorkingDays -= 1;
+          }
+          rollingProgress += dayTotal;
+          iter.setDate(iter.getDate()+1);
+        }
+      }
+    }
+
+    const remainingGoal = Math.max(0, goalAmount - progress);
     let remainingDays = totalWork - daysSoFar;
     if(remainingDays < 0) remainingDays = 0;
     const daily = remainingDays>0 ? (remainingGoal/remainingDays) : 0;
@@ -257,11 +281,14 @@ let progress = Number(settings.goalProgress||0);
       const date = new Date(y,m,d);
       const wd = date.getDay();
       const isWork = !!mask[wd];
-      const cell = document.createElement('div'); cell.className='day'; cell.dataset.date = iso(date);
+      const isoDate = iso(date);
+      const cell = document.createElement('div'); cell.className='day'; cell.dataset.date = isoDate;
       /*__TODAY_MARKER__*/
       const now=new Date(); if(date.getFullYear()===now.getFullYear() && date.getMonth()===now.getMonth() && date.getDate()===now.getDate()){ cell.classList.add('today'); }
 
-      const pace = (isWork && isFinite(daily) && daily>0) ? `<span class="pace"><span class="pill goal"></span>${money(daily)}</span>` : "";
+      const hasPace = isWork && Object.prototype.hasOwnProperty.call(paceByDate, isoDate);
+      const paceValue = hasPace ? paceByDate[isoDate] : null;
+      const pace = (hasPace && Number.isFinite(paceValue)) ? `<span class="pace"><span class="pill goal"></span>${money(paceValue)}</span>` : "";
       cell.innerHTML = `<div class="date"><span>${d}</span>${pace}</div>`;
 
       const list = document.createElement('div'); list.className='items';
