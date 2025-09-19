@@ -12,16 +12,6 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:14px/1.
 
 .hidden{display:none}
 
-/* Hide the calendar interface until the user is authenticated */
-body:not(.authed) .app-header,
-body:not(.authed) .kpis,
-body:not(.authed) .nav,
-body:not(.authed) .calendar,
-body:not(.authed) .legend,
-body:not(.authed) dialog {
-  display:none;
-}
-
 .app-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--panel);border-bottom:1px solid var(--ring);position:sticky;top:0;z-index:10}
 .brand{display:flex;align-items:center;gap:10px}
 .logo{height:28px;width:auto;opacity:.9}
