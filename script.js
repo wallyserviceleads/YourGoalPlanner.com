@@ -119,7 +119,46 @@ try {
   const dim = (y,m)=> new Date(y,m+1,0).getDate();
   const money = (n=0)=>"$"+(Math.round(+n)||0).toLocaleString();
 
-  function workingDaysInRange(start, end, mask){
+   function dailyGoalIndicator(target, actual){
+    if(!Number.isFinite(target)){
+      return { indicator: "", title: "" };
+    }
+    if(target <= 0){
+      return {
+        indicator: '<span class="pill goal" aria-hidden="true"></span>',
+        title: "No daily target"
+      };
+    }
+    const pct = target > 0 ? (actual / target) * 100 : 0;
+    const pctRounded = Math.round(pct);
+    const label = `${pctRounded}% of daily goal`;
+    if(pct >= 150){
+      return {
+        indicator: '<span class="pace-icon crown" aria-hidden="true">👑</span>',
+        title: label
+      };
+    }
+    if(pct >= 125){
+      return {
+        indicator: '<span class="pace-icon star" aria-hidden="true">⭐</span>',
+        title: label
+      };
+    }
+    let cls;
+    if(pct < 50){
+      cls = "pill goal-low";
+    } else if(pct < 100){
+      cls = "pill goal-mid";
+    } else {
+      cls = "pill goal-high";
+    }
+    return {
+      indicator: `<span class="${cls}" aria-hidden="true"></span>`,
+      title: label
+    };
+  }
+   
+   function workingDaysInRange(start, end, mask){
     if(!start||!end) return 0;
     const s=sod(start), e=eod(end);
     if(e<s) return 0;
@@ -288,7 +327,13 @@ function addEntryFlow(date){
 
       const hasPace = isWork && Object.prototype.hasOwnProperty.call(paceByDate, isoDate);
       const paceValue = hasPace ? paceByDate[isoDate] : null;
-      const pace = (hasPace && Number.isFinite(paceValue)) ? `<span class="pace"><span class="pill goal"></span>${money(paceValue)}</span>` : "";
+       const dayTotal = total(date);
+      let pace = "";
+      if(hasPace && Number.isFinite(paceValue)){
+        const { indicator, title: paceTitle } = dailyGoalIndicator(paceValue, dayTotal);
+        const attr = paceTitle ? ` title="${paceTitle}" aria-label="${paceTitle}"` : "";
+        pace = `<span class="pace"${attr}>${indicator}${money(paceValue)}</span>`;
+      }
       cell.innerHTML = `<div class="date"><span>${d}</span>${pace}</div>`;
 
       const list = document.createElement('div'); list.className='items';
@@ -333,8 +378,8 @@ if(arr.length){
       cell.appendChild(list);
 
       if(isWork){
-        const tot = total(date); weekSum += tot;
-        const t = document.createElement('div'); t.className='total'; t.innerHTML=`<span>Total</span><span>${money(tot)}</span>`;
+        weekSum += dayTotal;
+        const t = document.createElement('div'); t.className='total'; t.innerHTML=`<span>Total</span><span>${money(dayTotal)}</span>`;
         cell.appendChild(t);
       }
 
