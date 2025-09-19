@@ -61,19 +61,19 @@
       <section class="settings-section">
         <h4>Goal</h4>
         <div class="grid-2">
-          <label>Goal name
+         <label class="field">Goal name
             <input id="goalName" type="text" placeholder="Yearly sales"/>
           </label>
-          <label>Goal amount ($)
+          <label class="field">Goal amount ($)
             <input id="goalAmount" type="number" min="0" step="100" placeholder="500000"/>
           </label>
-          <label>Start date
+         <label class="field">Start date
             <input id="goalStart" type="date"/>
           </label>
-          <label>End date
+          <label class="field">End date
             <input id="goalEnd" type="date"/>
           </label>
-          <label>Progress to date ($)
+          <label class="field">Progress to date ($)
             <input id="goalProgress" type="number" min="0" step="100" placeholder="0"/>
           </label>       
         </div>
@@ -100,6 +100,18 @@
         </label>
       </section>
 
+      <section class="settings-section">
+        <h4>Google Sheet</h4>
+        <label class="field">Sheet link
+          <input id="sheetLink" type="url" placeholder="https://docs.google.com/spreadsheets/d/..." />
+        </label>
+        <p class="settings-hint">Publish the sheet to the web as CSV. Include columns for <strong>Date</strong>, <strong>Label</strong> and <strong>Amount</strong>.</p>
+        <div class="data-actions">
+          <button type="button" id="importSheetBtn">Import from Sheet</button>
+        </div>
+        <p id="sheetStatus" class="settings-status" aria-live="polite"></p>
+      </section>
+      
       <section class="settings-section">
         <h4>Data</h4>
         <div class="data-actions">
