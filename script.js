@@ -117,7 +117,86 @@ try {
     if (typeof settings.sheetUrl !== "string") settings.sheetUrl = "";
   let store = loadJSON(DATA_KEY, {});
 
-  // Theme
+  const sheetRefreshMinutesRaw = Number(cfg.SHEET_REFRESH_MINUTES);
+  const sheetRefreshMinutes =
+    (Number.isFinite(sheetRefreshMinutesRaw) && sheetRefreshMinutesRaw > 0)
+      ? sheetRefreshMinutesRaw
+      : 5;
+  const SHEET_SYNC_INTERVAL_MS = sheetRefreshMinutes * 60 * 1000;
+  let sheetSyncTimer = null;
+  let sheetSyncInProgress = false;
+
+  function clearSheetSyncLoop(){
+    if(sheetSyncTimer){
+      clearInterval(sheetSyncTimer);
+      sheetSyncTimer = null;
+    }
+  }
+
+  function restartSheetSyncLoop(){
+    clearSheetSyncLoop();
+    if(!settings.sheetUrl) return;
+    sheetSyncTimer = setInterval(()=>{
+      syncSheetData({ quiet: true });
+    }, SHEET_SYNC_INTERVAL_MS);
+  }
+
+  async function syncSheetData({ quiet } = {}){
+    const rawLink = !quiet ? (sheetLinkInput?.value ?? settings.sheetUrl ?? "") : (settings.sheetUrl || "");
+    const link = String(rawLink || "").trim();
+    if(!link){
+      if(!quiet){
+        showSheetStatus("Enter the share link to your Google Sheet first.", "error");
+        sheetLinkInput?.focus();
+      }
+      return null;
+    }
+
+    const previousLink = settings.sheetUrl;
+    if(previousLink !== link){
+      settings.sheetUrl = link;
+      saveJSON(SETTINGS_KEY, settings);
+      restartSheetSyncLoop();
+    }
+
+    if(sheetSyncInProgress){
+      if(!quiet){
+        showSheetStatus("A sync is already in progress…", "info");
+      }
+      return null;
+    }
+
+    sheetSyncInProgress = true;
+    if(importSheetBtn) importSheetBtn.disabled = true;
+    if(!quiet){
+      showSheetStatus("Loading…", "info");
+    }
+
+    let result = null;
+    try {
+      result = await importGoogleSheet(link);
+      store = result.store;
+      saveJSON(DATA_KEY, store);
+      render();
+      if(!quiet){
+        showSheetStatus(`Imported ${result.entries} entr${result.entries === 1 ? "y" : "ies"} across ${result.days} day${result.days === 1 ? "" : "s"}.`, "success");
+      }
+    } catch (err) {
+      const message = err && err.message ? err.message : "Unable to import from the sheet.";
+      if(!quiet){
+        showSheetStatus(message, "error");
+      } else {
+        console.error("Sheet sync failed:", message, err);
+      }
+    } finally {
+      sheetSyncInProgress = false;
+      if(importSheetBtn) importSheetBtn.disabled = false;
+    }
+
+    return result;
+  }
+  
+   // Theme
   function applyTheme(){
     const theme = settings.theme === "light" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", theme);
@@ -565,34 +644,14 @@ if(arr.length){
     boxes.forEach(cb=> mask[Number(cb.dataset.wd)] = !!cb.checked);
     settings.weekdays = mask;
     saveJSON(SETTINGS_KEY, settings);
-    render();
+     restartSheetSyncLoop();
+     render();
     settingsModal.close();
   });
 
   if(importSheetBtn){
-    importSheetBtn.addEventListener("click", async ()=>{
-      const link = (sheetLinkInput?.value || settings.sheetUrl || "").trim();
-      if(!link){
-        showSheetStatus("Enter the share link to your Google Sheet first.", "error");
-        sheetLinkInput?.focus();
-        return;
-      }
-      settings.sheetUrl = link;
-      saveJSON(SETTINGS_KEY, settings);
-      showSheetStatus("Loading…", "info");
-      importSheetBtn.disabled = true;
-      try {
-        const result = await importGoogleSheet(link);
-        store = result.store;
-        saveJSON(DATA_KEY, store);
-        render();
-        showSheetStatus(`Imported ${result.entries} entr${result.entries === 1 ? "y" : "ies"} across ${result.days} day${result.days === 1 ? "" : "s"}.`, "success");
-      } catch (err) {
-        const message = err && err.message ? err.message : "Unable to import from the sheet.";
-        showSheetStatus(message, "error");
-      } finally {
-        importSheetBtn.disabled = false;
-      }
+    importSheetBtn.addEventListener("click", ()=>{
+      syncSheetData({ quiet: false });
     });
   }
    
@@ -626,6 +685,7 @@ if(arr.length){
     store = {};
     saveJSON(SETTINGS_KEY, settings);
     saveJSON(DATA_KEY, store);
+    restartSheetSyncLoop();
     render();
     showSheetStatus("");
     settingsModal.close();
@@ -633,4 +693,8 @@ if(arr.length){
 
   // Boot
   render();
+   if(settings.sheetUrl){
+    syncSheetData({ quiet: true });
+  }
+  restartSheetSyncLoop();
 })();
