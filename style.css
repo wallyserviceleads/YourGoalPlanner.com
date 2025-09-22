@@ -17,7 +17,11 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:14px/1.
 .logo{height:28px;width:auto;opacity:.9}
 .titles h1{margin:0;font-size:18px}
 .goal-summary{color:var(--muted);font-size:12px;margin-top:2px}
-.controls{display:flex;align-items:center;gap:8px}
+.goal-summary.with-indicator{display:flex;align-items:center;gap:6px}
+.goal-summary.with-indicator .goal-summary-text{display:inline}
+.goal-progress-indicator{display:inline-flex;align-items:center;flex-shrink:0}
+.goal-progress-indicator > .pill,.goal-progress-indicator > .pace-icon{margin-right:0}
+.kpi-value.with-indicator{display:flex;align-items:center;gap:6px}.controls{display:flex;align-items:center;gap:8px}
 .icon-btn{display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 10px;border:1px solid var(--ring);background:transparent;border-radius:8px;color:var(--text);cursor:pointer}
 .icon-btn:hover{border-color:var(--accent)}
 
@@ -43,6 +47,11 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:14px/1.
 .pill{display:inline-block;width:10px;height:10px;border-radius:999px;margin-right:6px;vertical-align:middle}
 .pill.goal{background:var(--goal)}
 .pill.goal-low{background:#d64545}
+.pill.goal-low{background:#d64545}
+.pill.goal-mid{background:#f6c343}
+.pill.goal-high{background:#3ac779}
+.pace-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-right:6px;font-size:14px;line-height:1;vertical-align:middle}
+.pace-icon.star,.pace-icon.crown{color:#f5c542;text-shadow:0 0 4px rgba(0,0,0,.25)}
 .pill.goal-mid{background:#f6c343}
 .pill.goal-high{background:#3ac779}
 .pace-icon{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-right:6px;font-size:14px;line-height:1;vertical-align:middle}
