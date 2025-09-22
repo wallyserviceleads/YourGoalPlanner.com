@@ -209,7 +209,59 @@ try {
   const eod = (d)=>{ const x=new Date(d); x.setHours(23,59,59,999); return x; };
   const dim = (y,m)=> new Date(y,m+1,0).getDate();
   const money = (n=0)=>"$"+(Math.round(+n)||0).toLocaleString();
+const escapeHtml = (value = "") => String(value ?? "").replace(/[&<>"']/g, (ch) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[ch]);
 
+  function dailyGoalIndicator(target, actual, options = {}){
+    const {
+      contextLabel = "daily goal",
+      zeroLabel = "No daily target",
+      zeroIndicator = '<span class="pill goal" aria-hidden="true"></span>'
+    } = options || {};
+    if(!Number.isFinite(target)){
+      return { indicator: "", title: "" };
+    }
+    if(target <= 0){
+      return {
+        indicator: zeroIndicator,
+        title: zeroLabel
+      };
+    }
+    const safeActual = Number.isFinite(actual) ? actual : 0;
+    const pct = target > 0 ? (safeActual / target) * 100 : 0;
+    const pctRounded = Math.round(pct);
+    const label = `${pctRounded}% of ${contextLabel}`;
+    if(pct >= 150){
+      return {
+        indicator: '<span class="pace-icon crown" aria-hidden="true">👑</span>',
+        title: label
+      };
+    }
+    if(pct >= 125){
+      return {
+        indicator: '<span class="pace-icon star" aria-hidden="true">⭐</span>',
+        title: label
+      };
+    }
+    let cls;
+    if(pct < 50){
+      cls = "pill goal-low";
+    } else if(pct < 100){
+      cls = "pill goal-mid";
+    } else {
+      cls = "pill goal-high";
+    }
+    return {
+      indicator: `<span class="${cls}" aria-hidden="true"></span>`,
+      title: label
+    };
+  }   
+  
    function normalizeSheetUrl(link){
     if(!link) return "";
     const trimmed = String(link).trim();
@@ -415,16 +467,32 @@ function addEntryFlow(date){
     return sum;
   }
    
-   function updateGoalSummary(progress=0){
-    const name = settings.goalName || "Goal";
+    function updateGoalSummary(progress=0, indicatorData){
+    const summaryEl = $("#goalSummary");
+    if(!summaryEl) return;
+    const name = (settings.goalName || "Goal").trim() || "Goal";
     const amt = money(settings.goalAmount||0);
     let range = "no range";
     if(settings.goalStart && settings.goalEnd) range = `${settings.goalStart} → ${settings.goalEnd}`;
     else if(settings.goalStart) range = `from ${settings.goalStart}`;
     else if(settings.goalEnd) range = `until ${settings.goalEnd}`;
-    const pct = settings.goalAmount > 0 ? (progress / settings.goalAmount) * 100 : 0;
+    const goalAmount = Number(settings.goalAmount || 0);
+    const pct = goalAmount > 0 ? (progress / goalAmount) * 100 : 0;
     const pctText = `– ${pct.toFixed(1)}%`;
-    $("#goalSummary").textContent = `${name} — ${amt} (${range}) ${pctText}`;
+    const summaryText = `${name} — ${amt} (${range}) ${pctText}`;
+    const indicatorInfo = indicatorData || dailyGoalIndicator(goalAmount, progress, {
+      contextLabel: "overall goal",
+      zeroLabel: "No goal amount set",
+      zeroIndicator: ""
+    });
+    if(indicatorInfo && indicatorInfo.indicator){
+      summaryEl.classList.add("with-indicator");
+      const label = indicatorInfo.title || `${Math.round(pct)}% of overall goal`;
+      summaryEl.innerHTML = `<span class="goal-progress-indicator" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${indicatorInfo.indicator}</span><span class="goal-summary-text">${escapeHtml(summaryText)}</span>`;
+    } else {
+      summaryEl.classList.remove("with-indicator");
+      summaryEl.textContent = summaryText;
+    }
   }
 
   function render(){
@@ -505,14 +573,27 @@ function addEntryFlow(date){
     const quarterlyPct = quarterly>0 ? (quarterlyProgress/quarterly)*100 : 0;
 
     const pct = settings.goalAmount > 0 ? (progress / settings.goalAmount) * 100 : 0;
-
-    updateGoalSummary(progress);
+    const overallIndicator = dailyGoalIndicator(goalAmount, progress, {
+      contextLabel: "overall goal",
+      zeroLabel: "No goal amount set",
+      zeroIndicator: ""
+    }); 
      
-     kpiDaily.textContent = `${money(daily)} (${dailyPct.toFixed(1)}%)`;
+ updateGoalSummary(progress, overallIndicator);
+
+    kpiDaily.textContent = `${money(daily)} (${dailyPct.toFixed(1)}%)`;
     kpiWeekly.textContent = `${money(weekly)} (${weeklyPct.toFixed(1)}%)`;
     kpiMonthly.textContent = `${money(monthly)} (${monthlyPct.toFixed(1)}%)`;
     kpiQuarterly.textContent = `${money(quarterly)} (${quarterlyPct.toFixed(1)}%)`;
-    kpiYTD.textContent = `${money(progress)} (${pct.toFixed(1)}%)`;
+    const rangeProgressValue = `${money(progress)} (${pct.toFixed(1)}%)`;
+    if(overallIndicator && overallIndicator.indicator){
+      kpiYTD.classList.add("with-indicator");
+      const label = overallIndicator.title || `${Math.round(pct)}% of overall goal`;
+      kpiYTD.innerHTML = `<span class="goal-progress-indicator" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${overallIndicator.indicator}</span><span>${escapeHtml(rangeProgressValue)}</span>`;
+    } else {
+      kpiYTD.classList.remove("with-indicator");
+      kpiYTD.textContent = rangeProgressValue;
+    }
 
     // headers
     ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(h=>{
@@ -537,7 +618,8 @@ function addEntryFlow(date){
 
       const hasPace = isWork && Object.prototype.hasOwnProperty.call(paceByDate, isoDate);
       const paceValue = hasPace ? paceByDate[isoDate] : null;
-      const dayTotal = total(date);
+      
+       const dayTotal = total(date);
       let pace = "";
       if(hasPace && Number.isFinite(paceValue)){
         const { indicator, title: paceTitle } = dailyGoalIndicator(paceValue, dayTotal);
