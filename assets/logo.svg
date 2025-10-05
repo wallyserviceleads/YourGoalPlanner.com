@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="40" viewBox="0 0 160 40" role="img" aria-label="YourGoalPlanner logo">
+  <defs>
+    <linearGradient id="ygpGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="10" width="40" height="20" rx="8" fill="url(#ygpGradient)" />
+  <path d="M12 25l4-6 4 6h-2.5l-1.5-2.3L14 25H12zm16-6h-2l-2 3-2-3h-2l3 5-3 5h2l2-3 2 3h2l-3-5 3-5z" fill="#0f1115" />
+  <text x="48" y="26" font-family="'Inter', sans-serif" font-size="18" fill="#E7EAF0" letter-spacing="0.02em">YourGoalPlanner</text>
+</svg>
