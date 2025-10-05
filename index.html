@@ -1,197 +1,328 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Goal Tracking Calendar</title>
-  <link rel="stylesheet" href="style.css"/>
-  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml"/>
-  <script>
-    // Grab ?cid= from the page URL and remember it
-    const qp = new URLSearchParams(location.search);
-    const cid = qp.get('cid');
-    if (cid) localStorage.setItem('ghlContactId', cid);
-  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YourGoalPlanner — Turn Your Goals Into Income</title>
+  <meta name="description" content="YourGoalPlanner helps you turn your monetary goals into actionable plans with real-time tracking, summaries, and accountability." />
+  <meta property="og:title" content="YourGoalPlanner — Turn Your Goals Into Income" />
+  <meta property="og:description" content="Track your monetary goals with clarity. Plan, adjust, and hit your numbers with ease." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://yourgoalplanner.com/" />
+  <meta property="og:image" content="https://yourgoalplanner.com/assets/og-image.svg" />
+  <meta name="theme-color" content="#0f1115" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="./assets/logo.svg" />
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="main.js"></script>
 </head>
 <body>
-  <header class="app-header">
-    <div class="brand">
-      <img src="https://storage.googleapis.com/msgsndr/Ns5udtFt7geePYNHnaM7/media/689f2b28bccb296f83f4c628.png" alt="Brand" class="logo"/>
-      <div class="titles">
-        <h1>Goal Tracking Calendar</h1>
-        <div id="goalSummary" class="goal-summary">—</div>
-      </div>
-    </div>
-    <div class="controls">
-      <button id="settingsBtn" class="icon-btn" title="Settings" aria-label="Settings">⚙️</button>
+  <header class="site-header" id="top">
+    <div class="container header-container">
+      <a class="brand" href="#home">
+        <img src="./assets/logo.svg" alt="YourGoalPlanner" class="brand__logo" />
+        <span class="brand__text">YourGoalPlanner</span>
+      </a>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="primary-navigation">
+        <span class="visually-hidden">Toggle navigation</span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+      <nav class="site-nav" aria-label="Primary">
+        <ul id="primary-navigation" class="nav__list">
+          <li><a class="nav__link" href="#home">Home</a></li>
+          <li><a class="nav__link" href="#features">Features</a></li>
+          <li><a class="nav__link" href="#how">How It Works</a></li>
+          <li><a class="nav__link" href="#use-cases">Use Cases</a></li>
+          <li><a class="nav__link" href="#pricing">Pricing</a></li>
+          <li><a class="nav__link" href="#testimonials">Testimonials</a></li>
+          <li><a class="nav__link" href="#referral">Referral</a></li>
+          <li><a class="nav__link" href="#faq">FAQ</a></li>
+          <li><a class="nav__link" href="#contact">Contact</a></li>
+        </ul>
+      </nav>
     </div>
   </header>
 
-  <section class="kpis">
-    <div class="kpi"><div class="kpi-label">Daily Target</div><div id="kpiDaily" class="kpi-value">—</div></div>
-    <div class="kpi"><div class="kpi-label">Weekly Target</div><div id="kpiWeekly" class="kpi-value">—</div></div>
-    <div class="kpi"><div class="kpi-label">Monthly Target</div><div id="kpiMonthly" class="kpi-value">—</div></div>
-    <div class="kpi"><div class="kpi-label">Quarterly Target</div><div id="kpiQuarterly" class="kpi-value">—</div></div>
-    <div class="kpi"><div class="kpi-label">Range Progress</div><div id="kpiYTD" class="kpi-value">—</div></div>
-  </section>
+  <main>
+    <section id="home" class="section hero" aria-labelledby="hero-title">
+      <div class="container hero__content">
+        <div class="hero__text">
+          <p class="eyebrow">Goal Planning for High Performers</p>
+          <h1 id="hero-title">Turn Your Goals Into Income.</h1>
+          <p class="lead">Track your monetary goals with clarity. Plan, adjust, and hit your numbers with ease.</p>
+          <div class="hero__actions">
+            <a id="cta-start" class="button button--primary" href="#pricing">
+              Start Free Trial — 30 Days Full Access
+            </a>
+            <!-- TODO: Update href once signup route is available -->
+            <p class="hero__note">No credit card required. Cancel anytime.</p>
+          </div>
+        </div>
+        <figure class="hero__visual" aria-labelledby="hero-visual-title">
+          <span id="hero-visual-title" class="visually-hidden">Goal tracking calendar card</span>
+          <img src="./assets/hero-card.svg" alt="Calendar goal card showing $25,000 progress" />
+        </figure>
+      </div>
+    </section>
 
-  <section class="nav">
-    <button id="prevMonth">◀</button>
-    <h2 id="monthLabel">Month YYYY</h2>
-    <button id="nextMonth">▶</button>
-  </section>
+  <section id="features" class="section" aria-labelledby="features-title">
+      <div class="container">
+        <header class="section__header">
+          <h2 id="features-title">Features to Keep Your Goals On Track</h2>
+          <span class="chip chip--accent" aria-label="Coming soon goal types">Other Goal Types — Coming Soon</span>
+        </header>
+        <div class="grid grid--three">
+          <article class="card feature-card">
+            <img src="./assets/icon-target.svg" class="card__icon" alt="Target icon" />
+            <h3>Set Monetary Targets</h3>
+            <p>Create a goal like “Earn $25,000 this hail season” and watch progress as you log wins.</p>
+          </article>
+          <article class="card feature-card">
+            <img src="./assets/icon-chart.svg" class="card__icon" alt="Chart icon" />
+            <h3>Visual Goal Tracking</h3>
+            <p>See where you are vs. where you need to be.</p>
+          </article>
+          <article class="card feature-card">
+            <img src="./assets/icon-fire.svg" class="card__icon" alt="Fire icon" />
+            <h3>Stay Motivated</h3>
+            <p>Streaks and weekly summaries keep you accountable.</p>
+          </article>
+        </div>
+      </div>
+    </section>
 
-  <section class="calendar">
-    <div class="calendar-grid" id="calendarGrid"></div>
-  </section>
+  <section id="how" class="section" aria-labelledby="how-title">
+      <div class="container">
+        <header class="section__header">
+          <h2 id="how-title">How It Works</h2>
+        </header>
+        <ol class="step-list">
+          <li class="step">
+            <span class="step__number" aria-hidden="true">1</span>
+            <div>
+              <h3>Sign up in 30 seconds</h3>
+              <p>Enter your name and email to get started.</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step__number" aria-hidden="true">2</span>
+            <div>
+              <h3>Add your first monetary goal</h3>
+              <p>For example, “$10,000 in booked estimates this month.”</p>
+            </div>
+          </li>
+          <li class="step">
+            <span class="step__number" aria-hidden="true">3</span>
+            <div>
+              <h3>Watch your progress</h3>
+              <p>Weekly summaries and nudges keep you aligned.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
 
-  <footer class="legend">
-    <div><span class="pill goal"></span> Goal pace</div>
-    <div class="right">Local data</div>
+      <section id="use-cases" class="section" aria-labelledby="use-cases-title">
+      <div class="container">
+        <header class="section__header">
+          <h2 id="use-cases-title">Built for Your Workflows</h2>
+        </header>
+        <div class="grid grid--three">
+          <article class="card">
+            <h3>Hail Chaser</h3>
+            <p>Track booked repairs vs. your seasonal income target. Know exactly how close you are to maximizing the storm.</p>
+          </article>
+          <article class="card">
+            <h3>Small Business Owner</h3>
+            <p>Set monthly revenue goals and get reminders to follow up with leads before the month ends.</p>
+          </article>
+          <article class="card">
+            <h3>Sales Professional</h3>
+            <p>Break down your annual quota into smaller, achievable milestones and keep momentum.</p>
+          </article> 
+        </div>
+       </div>
+    </section>
+
+      <section id="pricing" class="section" aria-labelledby="pricing-title">
+      <div class="container">
+        <header class="section__header">
+          <h2 id="pricing-title">Choose Your Plan</h2>
+          <p class="section__subhead">Flexible options designed to match your growth.</p>
+        </header>
+        <div class="grid grid--three pricing-grid">
+          <article class="card pricing-card">
+            <header>
+              <h3>Premium</h3>
+              <p class="pricing-card__price"><span class="sr-currency" aria-hidden="true">$</span>10<span class="pricing-card__term">/mo</span> <span class="pricing-card__alt">or $97/yr</span></p>
+            </header>
+            <p>Unlimited goals + CRM integrations + reporting.</p>
+            <a class="button button--secondary" href="#contact">Get Premium</a>
+            <!-- TODO: Replace with Stripe checkout link -->
+          </article>
+          <article class="card pricing-card">
+            <header>
+              <h3>Basic Lifetime</h3>
+              <p class="pricing-card__price">$97<span class="pricing-card__term"> one-time</span></p>
+            </header>
+            <p>Up to 3 monetary goals. No integrations/reporting.</p>
+            <a class="button button--secondary" href="#contact">Buy Lifetime</a>
+            <!-- TODO: Replace with Stripe checkout link -->
+          </article>
+          <article class="card pricing-card">
+            <header>
+              <h3>Free / Limited Mode</h3>
+              <p class="pricing-card__price">$0</p>
+            </header>
+            <p>1 goal, no integrations.</p>
+            <a class="button button--ghost" href="#contact">Start Free</a>
+            <!-- TODO: Replace with signup link -->
+          </article>
+        </div>
+      <p class="pricing__note">Future goal types included once available at no extra cost.</p>
+      </div>
+    </section>
+
+      <section id="testimonials" class="section" aria-labelledby="testimonials-title">
+      <div class="container">
+        <header class="section__header">
+          <h2 id="testimonials-title">What Customers Are Saying</h2>
+        </header>
+        <div class="grid grid--three testimonials">
+          <figure class="card testimonial-card">
+            <blockquote>
+              “The streak feature keeps me motivated to hit my daily targets.”
+            </blockquote>
+            <figcaption>— John D.</figcaption>
+          </figure>
+          <figure class="card testimonial-card">
+            <blockquote>
+              “I finally hit my seasonal goal by tracking progress week by week.”
+            </blockquote>
+            <figcaption>— Sarah M.</figcaption>
+          </figure>
+          <figure class="card testimonial-card">
+            <blockquote>
+              “Simple and effective. Highly recommended.”
+            </blockquote>
+            <figcaption>— Emily R.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+    
+      <section id="referral" class="section" aria-labelledby="referral-title">
+      <div class="container referral">
+        <div class="referral__intro">
+          <h2 id="referral-title">Invite a Friend — You Both Get 1 Month Free.</h2>
+          <p>Perfect for teams or traveling hail crews.</p>
+        </div>
+        <form class="referral__form" data-referral-form>
+          <label class="visually-hidden" for="referral-email">Referral email</label>
+          <input id="referral-email" type="email" name="email" placeholder="your@email.com" required />
+          <button type="submit" class="button button--primary">Get My Referral Link</button>
+        </form>
+        <div class="referral__result" hidden>
+          <p class="referral__code-label">Your referral link</p>
+          <div class="referral__code">
+            <output id="referral-link" aria-live="polite"></output>
+            <button type="button" class="button button--secondary" data-copy-button>Copy</button>
+          </div>
+          <p class="referral__hint">Share this link to give friends a free month. You get one too.</p>
+        </div>
+     </div>
+    </section>
+
+<section id="faq" class="section" aria-labelledby="faq-title">
+      <div class="container">
+        <header class="section__header">
+          <h2 id="faq-title">FAQ</h2>
+        </header>
+        <div class="accordion" data-accordion>
+          <div class="accordion__item">
+            <h3>
+              <button class="accordion__trigger" aria-expanded="false" aria-controls="faq-panel-1" id="faq-trigger-1">
+                How is this different from a spreadsheet?
+              </button>
+            </h3>
+            <div id="faq-panel-1" class="accordion__panel" role="region" aria-labelledby="faq-trigger-1" hidden>
+              <p>Unlike spreadsheets, YourGoalPlanner gives you visual tracking, streaks, weekly summaries, and clear upgrade paths when you need more power.</p>
+            </div>
+          </div>
+          <div class="accordion__item">
+            <h3>
+              <button class="accordion__trigger" aria-expanded="false" aria-controls="faq-panel-2" id="faq-trigger-2">
+                Do I need a credit card for the trial?
+              </button>
+            </h3>
+            <div id="faq-panel-2" class="accordion__panel" role="region" aria-labelledby="faq-trigger-2" hidden>
+              <p>No.</p>
+            </div>
+          </div>
+          <div class="accordion__item">
+            <h3>
+              <button class="accordion__trigger" aria-expanded="false" aria-controls="faq-panel-3" id="faq-trigger-3">
+                What happens after the trial?
+              </button>
+            </h3>
+            <div id="faq-panel-3" class="accordion__panel" role="region" aria-labelledby="faq-trigger-3" hidden>
+              <p>You move into Limited Mode with 1 goal. Upgrade anytime to unlock more power.</p>
+            </div>
+          </div>
+          <div class="accordion__item">
+            <h3>
+              <button class="accordion__trigger" aria-expanded="false" aria-controls="faq-panel-4" id="faq-trigger-4">
+                Can I change plans later?
+              </button>
+            </h3>
+            <div id="faq-panel-4" class="accordion__panel" role="region" aria-labelledby="faq-trigger-4" hidden>
+              <p>Yes—upgrade or downgrade whenever you need without losing data.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+      <footer id="contact" class="section site-footer" aria-labelledby="contact-title">
+    <div class="container footer__content">
+      <div class="footer__contact">
+        <h2 id="contact-title">Let’s Talk</h2>
+        <form class="contact-form" data-contact-form>
+          <div class="form-field">
+            <label for="contact-name">Name</label>
+            <input type="text" id="contact-name" name="name" autocomplete="name" required />
+          </div>
+          <div class="form-field">
+            <label for="contact-email">Email</label>
+            <input type="email" id="contact-email" name="email" autocomplete="email" required />
+          </div>
+          <div class="form-field">
+            <label for="contact-message">Message</label>
+            <textarea id="contact-message" name="message" rows="4" required></textarea>
+          </div>
+          <button type="submit" class="button button--primary">Send Message</button>
+          <!-- TODO: Connect form to backend or service -->
+        </form>
+      </div>
+<div class="footer__meta">
+        <nav aria-label="Legal">
+          <ul class="footer__links">
+            <li><a href="#privacy">Privacy</a></li>
+            <li><a href="#terms">Terms</a></li>
+            <li><a href="#referral-terms">Referral Terms</a></li>
+          </ul>
+        </nav>
+        <!-- TODO: Replace stub legal anchors with live policy URLs -->
+        <p class="footer__copy">&copy; <span data-year></span> YourGoalPlanner. All rights reserved.</p>
+      </div>
+    </div>
+    <aside class="cookie-note" role="status" aria-live="polite">
+      <p>We use functional cookies to keep you signed in. <a href="#privacy">Learn more</a>.</p>
+    </aside>
   </footer>
-
-  <!-- Settings Modal -->
-  <dialog id="settingsModal">
-    <form method="dialog" class="settings-form">
-      <header class="settings-header">
-        <h3>Settings</h3>
-        <button id="closeSettings" class="icon-btn" aria-label="Close" title="Close" value="cancel">✕</button>
-      </header>
-
-      <section class="settings-section">
-        <h4>Goal</h4>
-        <div class="grid-2">
-         <label class="field">Goal name
-            <input id="goalName" type="text" placeholder="Yearly sales"/>
-          </label>
-          <label class="field">Goal amount ($)
-            <input id="goalAmount" type="number" min="0" step="100" placeholder="500000"/>
-          </label>
-         <label class="field">Start date
-            <input id="goalStart" type="date"/>
-          </label>
-          <label class="field">End date
-            <input id="goalEnd" type="date"/>
-          </label>
-          <label class="field">Progress to date ($)
-            <input id="goalProgress" type="number" min="0" step="100" placeholder="0"/>
-          </label>       
-        </div>
-      </section>
-
-      <section class="settings-section">
-        <h4>Working days</h4>
-        <div class="weekday-toggles">
-          <label><input type="checkbox" data-wd="0"> Sun</label>
-          <label><input type="checkbox" data-wd="1" checked> Mon</label>
-          <label><input type="checkbox" data-wd="2" checked> Tue</label>
-          <label><input type="checkbox" data-wd="3" checked> Wed</label>
-          <label><input type="checkbox" data-wd="4" checked> Thu</label>
-          <label><input type="checkbox" data-wd="5" checked> Fri</label>
-          <label><input type="checkbox" data-wd="6" checked> Sat</label>
-        </div>
-      </section>
-
-      <section class="settings-section">
-        <h4>Appearance</h4>
-        <label class="switch-row">
-          <input type="checkbox" id="themeToggle">
-          <span>Light theme</span>
-        </label>
-      </section>
-
-      <section class="settings-section">
-        <h4>Google Sheet</h4>
-        <label class="field">Sheet link
-          <input id="sheetLink" type="url" placeholder="https://docs.google.com/spreadsheets/d/..." />
-        </label>
-        <p class="settings-hint">Linking a Google Sheet lets you feed CRM data directly without relying on third party apps.</p>
-        <p class="settings-hint">Publish the sheet to the web as CSV. Include columns for <strong>Date</strong>, <strong>Label</strong> and <strong>Amount</strong>.</p>
-        <div class="data-actions">
-          <button type="button" id="importSheetBtn">Import from Sheet</button>
-        </div>
-        <p id="sheetStatus" class="settings-status" aria-live="polite"></p>
-      </section>
-      
-      <section class="settings-section">
-        <h4>Data</h4>
-        <div class="data-actions">
-          <button type="button" id="resetBtn">Reset All</button>
-        </div>
-      </section>
-
-      <section class="settings-section">
-        <h4>Help</h4>
-        <div class="data-actions">
-          <button type="button" id="helpBtn">How to use this calendar</button>
-        </div>
-      </section>
-
-
-      
-      <footer class="settings-footer">
-        <button value="cancel">Cancel</button>
-        <button id="saveSettings" value="default">Save</button>
-      </footer>
-    </form>
-  </dialog>
-   <dialog id="helpModal" class="modal">
-    <form method="dialog" class="modal-inner">
-      <h3>How to use this calendar</h3>
-      <ol>
-        <li>Open <strong>Settings</strong> (⚙️) to enter your goal name, amount, date range and current progress.</li>
-        <li>Select which weekdays count toward your goal pacing.</li>
-        <li>Save your settings to update the KPIs and calendar.</li>
-        <li>Click any day on the calendar to add one or more entries for that date.</li>
-        <li>Use the KPIs at the top to track daily, weekly, monthly and quarterly targets.</li>
-        <li>Your data stays in this browser; choose <em>Reset All</em> in Settings to clear everything.</li>
-        <li>Set up the Google Sheet import as a straightforward CRM connection path that doesn’t rely on middleware services by publishing the sheet to the web as CSV with <strong>Date</strong>, <strong>Label</strong> and <strong>Amount</strong> columns before importing.</li>     
-      </ol>
-      <menu class="actions">
-        <button value="ok">Close</button>
-      </menu>
-    </form>
-  </dialog>
-  <dialog id="entryModal" class="modal">
-    <form method="dialog" id="entryForm" class="modal-inner">
-      <h3 id="entryTitle">Add entry</h3>
-
-      <div class="row">
-        <label for="entryLabel">Label</label>
-        <input id="entryLabel" type="text" placeholder="Sale" />
-      </div>
-
-      <div class="row">
-        <label for="entryAmount">Amount</label>
-        <input id="entryAmount" inputmode="decimal" pattern="[0-9.\-]*" placeholder="0.00" />
-      </div>
-
-      <menu class="actions">
-        <button value="cancel" type="submit">Cancel</button>
-        <button value="delete" id="entryDelete" class="danger" type="submit" style="display:none">Delete</button>
-        <button value="save" id="entrySave" type="submit">Save</button>
-      </menu>
-    </form>
-  </dialog>
-
-  <script>
-  async function pingLogin(note) {
-   const contactId = localStorage.getItem('ghlContactId');
-    if (!contactId) return;
-    await fetch('/api/ghl-login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contactId,
-        noteText: note || null
-      })
-    });
-  }
-
-  // Send one when the calendar loads
-  window.addEventListener('load', () => pingLogin('last login'));
-</script>
-<script defer src="/config.js"></script>
-<script defer src="/script.js"></script>
 </body>
 </html>
