@@ -379,47 +379,7 @@ const escapeHtml = (value = "") => String(value ?? "").replace(/[&<>"']/g, (ch) 
     const dayCount = Object.keys(imported).length;
     if(!entriesCount) throw new Error("No valid rows found. Expect Date, Label and Amount columns.");
     return { store: imported, entries: entriesCount, days: dayCount };
-  }
-
-   function dailyGoalIndicator(target, actual){
-    if(!Number.isFinite(target)){
-      return { indicator: "", title: "" };
-    }
-    if(target <= 0){
-      return {
-        indicator: '<span class="pill goal" aria-hidden="true"></span>',
-        title: "No daily target"
-      };
-    }
-    const pct = target > 0 ? (actual / target) * 100 : 0;
-    const pctRounded = Math.round(pct);
-    const label = `${pctRounded}% of daily goal`;
-    if(pct >= 150){
-      return {
-        indicator: '<span class="pace-icon crown" aria-hidden="true">👑</span>',
-        title: label
-      };
-    }
-    if(pct >= 125){
-      return {
-        indicator: '<span class="pace-icon star" aria-hidden="true">⭐</span>',
-        title: label
-      };
-    }
-    let cls;
-    if(pct < 50){
-      cls = "pill goal-low";
-    } else if(pct < 100){
-      cls = "pill goal-mid";
-    } else {
-      cls = "pill goal-high";
-    }
-    return {
-      indicator: `<span class="${cls}" aria-hidden="true"></span>`,
-      title: label
-    };
-  }
-   
+  }     
    function workingDaysInRange(start, end, mask){
     if(!start||!end) return 0;
     const s=sod(start), e=eod(end);
@@ -577,25 +537,54 @@ function addEntryFlow(date){
       contextLabel: "overall goal",
       zeroLabel: "No goal amount set",
       zeroIndicator: ""
-    }); 
-     
- updateGoalSummary(progress, overallIndicator);
+   });
 
-    kpiDaily.textContent = `${money(daily)} (${dailyPct.toFixed(1)}%)`;
-    kpiWeekly.textContent = `${money(weekly)} (${weeklyPct.toFixed(1)}%)`;
-    kpiMonthly.textContent = `${money(monthly)} (${monthlyPct.toFixed(1)}%)`;
-    kpiQuarterly.textContent = `${money(quarterly)} (${quarterlyPct.toFixed(1)}%)`;
+    updateGoalSummary(progress, overallIndicator);
+
+    const setKpiDisplay = (el, displayValue, indicatorInfo) => {
+      const stringValue = String(displayValue ?? "");
+      const indicatorMarkup = indicatorInfo && indicatorInfo.indicator;
+      if (indicatorMarkup) {
+        el.classList.add("with-indicator");
+        const labelText = indicatorInfo.title ? String(indicatorInfo.title) : "";
+        const safeLabel = labelText ? escapeHtml(labelText) : "";
+        const labelAttr = safeLabel ? ` title="${safeLabel}" aria-label="${safeLabel}"` : "";
+        el.innerHTML = `<span class="goal-progress-indicator"${labelAttr}>${indicatorMarkup}</span><span>${escapeHtml(stringValue)}</span>`;
+      } else {
+        el.classList.remove("with-indicator");
+        el.textContent = stringValue;
+      }
+    };
+
+    const dailyIndicator = dailyGoalIndicator(daily, dailyProgress, {
+      contextLabel: "daily target",
+      zeroLabel: "No daily target"
+    });
+    setKpiDisplay(kpiDaily, `${money(daily)} (${dailyPct.toFixed(1)}%)`, dailyIndicator);
+
+    const weeklyIndicator = dailyGoalIndicator(weekly, weeklyProgress, {
+      contextLabel: "weekly target",
+      zeroLabel: "No weekly target"
+    });
+    setKpiDisplay(kpiWeekly, `${money(weekly)} (${weeklyPct.toFixed(1)}%)`, weeklyIndicator);
+
+    const monthlyIndicator = dailyGoalIndicator(monthly, monthlyProgress, {
+      contextLabel: "monthly target",
+      zeroLabel: "No monthly target"
+    });
+    setKpiDisplay(kpiMonthly, `${money(monthly)} (${monthlyPct.toFixed(1)}%)`, monthlyIndicator);
+
+    const quarterlyIndicator = dailyGoalIndicator(quarterly, quarterlyProgress, {
+      contextLabel: "quarterly target",
+      zeroLabel: "No quarterly target"
+    });
+    setKpiDisplay(kpiQuarterly, `${money(quarterly)} (${quarterlyPct.toFixed(1)}%)`, quarterlyIndicator);
+
+   
     const rangeProgressValue = `${money(progress)} (${pct.toFixed(1)}%)`;
-    if(overallIndicator && overallIndicator.indicator){
-      kpiYTD.classList.add("with-indicator");
-      const label = overallIndicator.title || `${Math.round(pct)}% of overall goal`;
-      kpiYTD.innerHTML = `<span class="goal-progress-indicator" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${overallIndicator.indicator}</span><span>${escapeHtml(rangeProgressValue)}</span>`;
-    } else {
-      kpiYTD.classList.remove("with-indicator");
-      kpiYTD.textContent = rangeProgressValue;
-    }
+    setKpiDisplay(kpiYTD, rangeProgressValue, overallIndicator);
 
-    // headers
+   // headers
     ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(h=>{
       const div=document.createElement('div'); div.className='day';
       div.innerHTML=`<div class="date"><strong>${h}</strong></div>`; grid.appendChild(div);
