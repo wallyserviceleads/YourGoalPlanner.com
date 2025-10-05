@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="418" viewBox="0 0 800 418" role="img" aria-label="YourGoalPlanner share graphic">
+  <defs>
+    <linearGradient id="shareGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+  </defs>
+  <rect width="800" height="418" rx="32" fill="#141821" />
+  <text x="60" y="110" font-family="'Inter', sans-serif" font-size="48" font-weight="700" fill="#E7EAF0">Turn Your Goals Into Income.</text>
+  <text x="60" y="160" font-family="'Inter', sans-serif" font-size="22" fill="#9CA3AF">Plan, adjust, and hit your numbers with ease.</text>
+  <rect x="60" y="200" width="240" height="64" rx="16" fill="url(#shareGradient)" />
+  <text x="90" y="242" font-family="'Inter', sans-serif" font-size="26" font-weight="600" fill="#0f1115">Start Free Trial</text>
+  <circle cx="580" cy="210" r="130" fill="url(#shareGradient)" opacity="0.18" />
+  <circle cx="580" cy="210" r="95" fill="none" stroke="url(#shareGradient)" stroke-width="10" opacity="0.4" />
+  <text x="520" y="218" font-family="'Inter', sans-serif" font-size="42" font-weight="700" fill="#E7EAF0">$25k</text>
+</svg>
