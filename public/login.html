@@ -1,1 +1,109 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    button { padding: .6rem 1rem; font-size: 1rem; margin-right: .5rem; }
+  </style>
+</head>
+<body>
+  <h1>Welcome</h1>
+  <div>
+    <button id="loginBtn" disabled>Login</button>
+    <button id="logoutBtn" style="display:none">Logout</button>
+    <button id="manage-subscription" style="display:none">Manage Subscription</button>
+  </div>
 
+<!-- Auth0 SPA SDK -->
+<script src="https://cdn.auth0.com/js/auth0-spa-js/2.1/auth0-spa-js.production.js"></script>
+  <script>
+  let auth0Client;
+
+  async function init() {
+    const response = await fetch("/auth_config.json");
+    const config = await response.json();
+    
+    auth0Client = await auth0.createAuth0Client({
+      domain: config.domain,
+      clientId: config.clientId,
+      authorizationParams: {
+        redirect_uri: window.location.origin + "/login.html"
+      }
+    });
+
+    // Handle redirect after login
+    if (location.search.includes("code=") || location.search.includes("state=")) {
+      try { await auth0Client.handleRedirectCallback(); }
+      catch(e){ console.error("Redirect error:", e); }
+      history.replaceState({}, document.title, "/login.html");
+    }
+
+    const isAuthed = await auth0Client.isAuthenticated();
+    document.getElementById("loginBtn").style.display  = isAuthed ? "none" : "";
+    document.getElementById("logoutBtn").style.display = isAuthed ? "" : "none";
+    document.getElementById("manage-subscription").style.display = isAuthed ? "" : "none";
+  }
+
+  window.addEventListener("load", async () => {
+    await init();                    // ensures auth0Client exists
+    const loginBtn  = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const manageBtn = document.getElementById("manage-subscription");
+    loginBtn.disabled = false;
+    loginBtn.addEventListener('click', () => auth0Client.loginWithRedirect({
+      authorizationParams: { redirect_uri: window.location.origin + "/login.html" }
+    }));
+
+    logoutBtn.addEventListener('click', () =>
+      auth0Client.logout({
+        logoutParams: {
+          // Must be listed under "Allowed Logout URLs"
+          returnTo: window.location.origin + "/login.html"
+        }
+      })    
+     );
+    
+    manageBtn.addEventListener('click', async () => {
+      manageBtn.disabled = true;
+      try {
+        let token;
+        try {
+          token = await auth0Client.getTokenSilently();
+        } catch (tokenError) {
+          console.warn("Failed to fetch Auth0 token for portal session", tokenError);
+        }
+
+        const response = await fetch("/.netlify/functions/create-portal-session", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          }
+        });
+
+        if (!response.ok) {
+          const message = await response.text();
+          throw new Error(message || "Unable to create portal session");
+        }
+
+        const data = await response.json();
+        if (data?.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error("Missing portal session URL");
+        }
+      } catch (error) {
+        console.error("Manage subscription error:", error);
+        alert("Unable to open the billing portal. Please try again later.");
+      } finally {
+        manageBtn.disabled = false;  
+      }     
+    });
+  });
+</script>
+</body>
+</html>
